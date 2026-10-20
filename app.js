@@ -290,9 +290,10 @@ function renderHero(){
 }
 function moveDashboardAsset(step){const assets=state.assets.filter(a=>a.status!=="archived");if(!assets.length){toast("ابتدا یک دارایی ثبت کن.");return}let i=assets.findIndex(a=>a.id===state.selectedAssetId);if(i<0)i=0;i=(i+step+assets.length)%assets.length;state.selectedAssetId=assets[i].id;render()}
 function serviceRowHtml(s){
- const a=state.assets.find(x=>x.id===s.assetId),r=state.reminders.find(x=>x.id===s.reminderId),m=dashboardMetric(a);
- const details=[r?.title||"سرویس مستقل",a?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" "+m.unit:"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
- return '<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>'+esc(fmtDate(s.date))+' · '+fa(s.cost)+' تومان</strong><p>'+details+'</p>'+(s.attachmentName?'<small>پیوست: '+esc(s.attachmentName)+'</small>':'')+'<div class="item-actions"><button class="small-btn" data-action="edit-service" data-id="'+esc(s.id)+'">ویرایش</button><button class="small-btn danger" data-action="delete-service" data-id="'+esc(s.id)+'">حذف</button></div></div></article>';
+ const r=state.reminders.find(x=>x.id===s.reminderId),asset=state.assets.find(x=>x.id===serviceAssetId(s)),m=dashboardMetric(asset);
+ const details=[r?.title||"سرویس مستقل",asset?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" "+m.unit:"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
+ const attachment=s.attachmentData?'<div class="item-actions"><button class="small-btn" data-action="view-attachment" data-id="'+esc(s.id)+'">مشاهده پیوست</button><button class="small-btn" data-action="download-attachment" data-id="'+esc(s.id)+'">دانلود پیوست</button></div>':(s.attachmentName?'<small>نام پیوست موجود است، اما دادهٔ فایل در اطلاعات فعلی موجود نیست.</small>':'');
+ return '<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>'+esc(fmtDate(s.date))+' · '+fa(s.cost)+' تومان</strong><p>'+details+'</p>'+(s.attachmentName?'<small>پیوست: '+esc(s.attachmentName)+'</small>':'')+attachment+'<div class="item-actions"><button class="small-btn" data-action="edit-service" data-id="'+esc(s.id)+'">ویرایش</button><button class="small-btn danger" data-action="delete-service" data-id="'+esc(s.id)+'">حذف</button></div></div></article>';
 }
 function renderRecentServices(){const target=$("recentServicesList");if(!target)return;const a=dashboardAsset();if($("recentServicesHeading"))$("recentServicesHeading").textContent=a?"۵ سرویس اخیر · "+a.name:"۵ سرویس اخیر";const rows=sortedServices().filter(s=>!a||serviceAssetId(s)===a.id).slice(0,5);target.innerHTML=rows.length?rows.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>هنوز سرویسی برای این دارایی ثبت نشده</strong><p>با جابه‌جایی بین دارایی‌ها، سوابق همان دارایی نمایش داده می‌شود.</p></div>'}
 function syncDashboardMetric(a){
@@ -322,12 +323,19 @@ function saveEditedService(e){
 }
 function finishEditedService(f){selectedServiceEditId=null;f.reset();f.querySelector("h2").textContent="ثبت انجام سرویس";f.querySelector('[type="submit"]').textContent="ثبت در سوابق";close("serviceDialog");persist();toast("سابقه سرویس ویرایش شد.")}
 const previousRenderForHero=render;
-render=function(){previousRenderForHero();renderHero();syncDashboardMetric(dashboardAsset());const a=dashboardAsset(),urgent=state.reminders.filter(r=>r.status==="open"&&r.assetId===a?.id&&isLate(r));$("urgentCount").textContent=fa(urgent.length)+" مورد";$("urgentList").innerHTML=urgent.length?urgent.map(r=>'<article class="urgent-item"><span class="urgent-dot">!</span><div class="urgent-copy"><strong>'+esc(r.title)+'</strong><small>'+esc(a?.name||"دارایی")+"</small></div><button class=\"small-btn\" data-action=\"complete\" data-id=\""+esc(r.id)+"\">ثبت سرویس</button></article>").join(""):'<div class="urgent-empty"><span>✓</span><div><strong>فعلاً مورد عقب‌افتاده‌ای برای این دارایی نیست</strong><small>با تغییر دارایی منتخب، موارد ضروری همان دارایی نمایش داده می‌شوند.</small></div></div>'};
+render=function(){
+ previousRenderForHero();renderHero();syncDashboardMetric(dashboardAsset());
+ const a=dashboardAsset();
+ const items=state.reminders.filter(r=>r.status==="open"&&r.assetId===a?.id).map(r=>({...r,late:isLate(r),soon:dueSoon(r)})).filter(r=>r.late||r.soon).sort((x,y)=>Number(y.late)-Number(x.late));
+ $("urgentCount").textContent=fa(items.length)+" مورد";
+ $("urgentList").innerHTML=items.length?items.map(r=>'<article class="urgent-item"><span class="urgent-dot">!</span><div class="urgent-copy"><strong>'+esc(r.title)+'</strong><small>'+esc(a?.name||"دارایی")+" · "+(r.late?"موعد گذشته":"نزدیک موعد")+'</small></div><button class="small-btn" data-action="complete" data-id="'+esc(r.id)+'">ثبت سرویس</button></article>').join(""):'<div class="urgent-empty"><span>✓</span><div><strong>سرویس نزدیک موعد یا عقب‌افتاده‌ای برای این دارایی نیست</strong><small>با جابه‌جایی بین دارایی‌ها، موارد همان دارایی نمایش داده می‌شوند.</small></div></div>';
+};
 document.addEventListener("click",e=>{
  const step=e.target.closest("[data-carousel-step]");if(step){e.preventDefault();moveDashboardAsset(Number(step.dataset.carouselStep));return}
  const dot=e.target.closest("[data-carousel-index]");if(dot){e.preventDefault();const a=state.assets.filter(x=>x.status!=="archived")[Number(dot.dataset.carouselIndex)];if(a){state.selectedAssetId=a.id;persist()}return}
  const b=e.target.closest("[data-action]");if(!b)return;const id=b.dataset.id,action=b.dataset.action;
  if(action==="edit-service"){e.preventDefault();e.stopImmediatePropagation();openServiceEdit(id)}
+ if(action==="view-attachment"||action==="download-attachment"){e.preventDefault();e.stopImmediatePropagation();const s=state.services.find(x=>x.id===id);if(!s?.attachmentData){toast("فایل پیوست در اطلاعات فعلی موجود نیست.");return}const a=document.createElement("a");a.href=s.attachmentData;a.download=action==="download-attachment"?(s.attachmentName||"service-attachment"):"";if(action==="view-attachment"){a.target="_blank";a.rel="noopener"}document.body.appendChild(a);a.click();a.remove();}
  if(action==="delete-service"){e.preventDefault();e.stopImmediatePropagation();if(!confirm("این سابقه سرویس حذف شود؟"))return;const s=state.services.find(x=>x.id===id);state.services=state.services.filter(x=>x.id!==id);if(s?.reminderId&&!state.services.some(x=>x.reminderId===s.reminderId)){const r=state.reminders.find(x=>x.id===s.reminderId);if(r)r.status="open"}persist();toast("سابقه سرویس حذف شد.")}
 },true);
 document.addEventListener("submit",e=>{if(e.target?.id==="serviceForm"&&selectedServiceEditId)saveEditedService(e)},true);
