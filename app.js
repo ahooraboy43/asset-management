@@ -263,3 +263,71 @@ activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#othe
 $("applyServiceFilters")?.addEventListener("click",()=>{if(validateJalaliFields($("serviceHistoryView")))renderAllServices();});
 $("resetServiceFilters")?.addEventListener("click",()=>{const r=previousMonthRange();$("historyFrom").value=toJalaliInput(r.from);$("historyTo").value=toJalaliInput(r.to);$("historyAssetCategory").value="";renderAllServices();});
 render();
+
+/* Dashboard carousel + editable service ledger */
+let selectedServiceEditId=null, selectedCarouselTimer=null;
+function dashboardAsset(){return state.assets.find(a=>a.id===state.selectedAssetId&&a.status!=="archived")||state.assets.find(a=>a.status!=="archived")||null}
+function dashboardMetric(a){const unit=a?.metricUnit||(a?.category==="خودرو"?"کیلومتر":a?.category==="خانه"?"متر مربع":a?.category==="وسایل"?"ساعت":"واحد");const value=unit==="کیلومتر"?Number(a?.odometer)||0:unit==="متر مربع"?Number(a?.details?.area)||0:Number(a?.details?.metricValue)||0;return {unit,value}}
+function renderHero(){
+ const assets=state.assets.filter(a=>a.status!=="archived"),a=dashboardAsset(),idx=Math.max(0,assets.findIndex(x=>x.id===a?.id)),m=dashboardMetric(a);
+ if(a)state.selectedAssetId=a.id;
+ $("heroAssetName").innerHTML=a?esc(a.name)+' <span>'+esc(a.category==="خودرو"?[a.model,a.year].filter(Boolean).join(" · ")||"خودرو":a.category)+'</span>':'دارایی‌ای ثبت نشده <span>از دکمه + یک دارایی اضافه کن</span>';
+ $("heroOdometer").textContent=a&&m.value?fa(m.value):"—";$("heroMetricLabel").textContent=m.unit;
+ $("heroAssetSubtitle").textContent=a?"نمای کلی و سرویس‌های دوره‌ای این دارایی":"پس از ثبت دارایی، خلاصه وضعیت اینجا نمایش داده می‌شود";
+ $("assetIdentity").textContent=a?assetShortDescription(a):"دارایی‌ای ثبت نشده";
+ const art=$("vehicleArt"),generic=$("genericAssetArt");if(art)art.classList.toggle("generic-mode",!!a&&a.category!=="خودرو");
+ if(generic){generic.classList.toggle("hidden",!a||a.category==="خودرو");generic.textContent=a?(a.category==="خانه"?"⌂":a.category==="وسایل"?"▣":a.category==="سلامت"?"✚":a.category==="مالی"?"＄":"◇"):"◇";}
+ const dots=$("assetCarouselDots");if(dots)dots.innerHTML=assets.map((x,i)=>'<button type="button" aria-label="'+esc(x.name)+'" class="'+(i===idx?"active":"")+'" data-carousel-index="'+i+'"></button>').join("");
+ const count=$("assetCarouselCount");if(count)count.textContent=assets.length?fa(idx+1)+" / "+fa(assets.length):"۰ / ۰";
+ const next=state.reminders.filter(r=>r.assetId===a?.id&&r.status==="open").sort((x,y)=>(x.dueDate||"9999").localeCompare(y.dueDate||"9999"))[0];
+ $("assetNextService").textContent=next?next.title+" · "+(next.dueDate?fmtDate(next.dueDate):"سررسید ثبت نشده"):"برای این دارایی عملیاتی ثبت نشده";
+}
+function moveDashboardAsset(step){const assets=state.assets.filter(a=>a.status!=="archived");if(!assets.length)return;let i=assets.findIndex(a=>a.id===state.selectedAssetId);i=(i+step+assets.length)%assets.length;state.selectedAssetId=assets[i].id;persist()}
+function serviceRowHtml(s){
+ const a=state.assets.find(x=>x.id===s.assetId),r=state.reminders.find(x=>x.id===s.reminderId),m=dashboardMetric(a);
+ const details=[r?.title||"سرویس مستقل",a?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" "+m.unit:"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
+ return '<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>'+esc(fmtDate(s.date))+' · '+fa(s.cost)+' تومان</strong><p>'+details+'</p>'+(s.attachmentName?'<small>پیوست: '+esc(s.attachmentName)+'</small>':'')+'<div class="item-actions"><button class="small-btn" data-action="edit-service" data-id="'+esc(s.id)+'">ویرایش</button><button class="small-btn danger" data-action="delete-service" data-id="'+esc(s.id)+'">حذف</button></div></div></article>';
+}
+function renderRecentServices(){const target=$("recentServicesList");if(!target)return;const a=dashboardAsset();if($("recentServicesHeading"))$("recentServicesHeading").textContent=a?"۵ سرویس اخیر · "+a.name:"۵ سرویس اخیر";const rows=sortedServices().filter(s=>!a||s.assetId===a.id).slice(0,5);target.innerHTML=rows.length?rows.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>هنوز سرویسی برای این دارایی ثبت نشده</strong><p>با جابه‌جایی بین دارایی‌ها، سوابق همان دارایی نمایش داده می‌شود.</p></div>'}
+function syncDashboardMetric(a){
+ const m=dashboardMetric(a),isCar=!!a&&m.unit==="کیلومتر";
+ ["serviceCounterField","reminderCounterField","reminderIntervalCounterField"].forEach(id=>$(id)?.classList.toggle("hidden",!isCar));
+ if($("serviceCounterLabel"))$("serviceCounterLabel").textContent=m.unit;
+ if($("reminderCounterLabel"))$("reminderCounterLabel").textContent=m.unit;
+ if($("reminderIntervalCounterLabel"))$("reminderIntervalCounterLabel").textContent=m.unit;
+ const t=$("reminderTriggerType")?.value||"date";
+ $("reminderCounterField")?.classList.toggle("hidden",!isCar||t==="date");
+ $("reminderDateField")?.classList.toggle("hidden",t==="odometer");
+}
+function openServiceEdit(id){
+ const s=state.services.find(x=>x.id===id);if(!s)return;selectedServiceEditId=id;
+ const f=$("serviceForm");f.reset();refreshOptions();f.elements.reminderId.value=s.reminderId||"";f.elements.assetId.value=s.assetId||"";
+ f.elements.date.value=toJalaliInput(s.date||"");f.elements.odometer.value=s.odometer||"";f.elements.part.value=s.part||"";
+ f.elements.cost.value=s.cost||"";f.elements.notes.value=s.notes||"";syncDashboardMetric(state.assets.find(a=>a.id===s.assetId));
+ $("serviceDialog").querySelector("h2").textContent="ویرایش سرویس ثبت‌شده";f.querySelector('[type="submit"]').textContent="ذخیره تغییرات";open("serviceDialog");
+}
+function saveEditedService(e){
+ e.preventDefault();e.stopImmediatePropagation();const f=$("serviceForm");if(!validateJalaliFields(f))return;
+ const s=state.services.find(x=>x.id===selectedServiceEditId);if(!s)return;const d=new FormData(f),date=toISODate(d.get("date"));if(!date){toast("تاریخ را به شکل شمسی وارد کن.");return}
+ const reminderId=d.get("reminderId")||"",rem=state.reminders.find(x=>x.id===reminderId),assetId=rem?.assetId||d.get("assetId")||"";
+ Object.assign(s,{reminderId,assetId,date,odometer:Number(d.get("odometer"))||0,part:String(d.get("part")||"").trim(),cost:Number(d.get("cost"))||0,notes:String(d.get("notes")||"").trim(),updatedAt:new Date().toISOString()});
+ const file=f.elements.attachment.files[0];if(file){if(file.size>2*1024*1024){toast("حجم پیوست حداکثر ۲ مگابایت است.");return}const reader=new FileReader();reader.onload=()=>{s.attachmentName=file.name;s.attachmentData=reader.result;finishEditedService(f)};reader.readAsDataURL(file);return}
+ finishEditedService(f);
+}
+function finishEditedService(f){selectedServiceEditId=null;f.reset();f.querySelector("h2").textContent="ثبت انجام سرویس";f.querySelector('[type="submit"]').textContent="ثبت در سوابق";close("serviceDialog");persist();toast("سابقه سرویس ویرایش شد.")}
+const previousRenderForHero=render;
+render=function(){previousRenderForHero();renderHero();syncDashboardMetric(dashboardAsset());};
+document.addEventListener("click",e=>{
+ const step=e.target.closest("[data-carousel-step]");if(step){e.preventDefault();moveDashboardAsset(Number(step.dataset.carouselStep));return}
+ const dot=e.target.closest("[data-carousel-index]");if(dot){e.preventDefault();const a=state.assets.filter(x=>x.status!=="archived")[Number(dot.dataset.carouselIndex)];if(a){state.selectedAssetId=a.id;persist()}return}
+ const b=e.target.closest("[data-action]");if(!b)return;const id=b.dataset.id,action=b.dataset.action;
+ if(action==="edit-service"){e.preventDefault();e.stopImmediatePropagation();openServiceEdit(id)}
+ if(action==="delete-service"){e.preventDefault();e.stopImmediatePropagation();if(!confirm("این سابقه سرویس حذف شود؟"))return;const s=state.services.find(x=>x.id===id);state.services=state.services.filter(x=>x.id!==id);if(s?.reminderId&&!state.services.some(x=>x.reminderId===s.reminderId)){const r=state.reminders.find(x=>x.id===s.reminderId);if(r)r.status="open"}persist();toast("سابقه سرویس حذف شد.")}
+},true);
+document.addEventListener("submit",e=>{if(e.target?.id==="serviceForm"&&selectedServiceEditId)saveEditedService(e)},true);
+$("serviceAsset")?.addEventListener("change",e=>syncDashboardMetric(state.assets.find(a=>a.id===e.target.value)));
+$("reminderAsset")?.addEventListener("change",e=>syncDashboardMetric(state.assets.find(a=>a.id===e.target.value)));
+$("reminderTriggerType")?.addEventListener("change",()=>syncDashboardMetric(state.assets.find(a=>a.id===$("reminderAsset").value)));
+$("viewAssetServicesBtn")?.addEventListener("click",()=>activatePage("services"));
+if(!selectedCarouselTimer)selectedCarouselTimer=setInterval(()=>{if(state.assets.filter(a=>a.status!=="archived").length>1)moveDashboardAsset(1)},10000);
+render();
