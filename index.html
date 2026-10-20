@@ -1,51 +1,347 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
+
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#202123"><meta name="description" content="مدیریت سرویس و نگهداری خودرو">
-<title>همراه من</title><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon-192.png"><link rel="apple-touch-icon" href="./icons/icon-192.png"><link rel="stylesheet" href="./styles.css?v=20261020-14">
-</head><body>
-<header class="topbar" id="top"><div class="brand"><span class="brand-mark">◈</span><div><p class="eyebrow" id="pageEyebrow">مدیریت دارایی و نگهداری</p><h1 id="pageTitle">خانه</h1></div></div><button id="installBtn" class="button button-light hidden" type="button">نصب</button><button class="round-btn" id="addAssetBtn" aria-label="افزودن دارایی">＋</button></header>
-<main class="container">
-<section class="asset-hero app-page" data-page="dashboard"><div class="hero-top"><span class="tiny-pill"><i></i> دارایی منتخب</span><button class="round-btn more-btn" aria-label="گزینه‌ها">•••</button></div>
-<div class="vehicle-art" id="vehicleArt" aria-hidden="true"><svg viewBox="0 0 620 250" role="img"><defs><linearGradient id="carpaint" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#777a7e"/><stop offset=".42" stop-color="#34363a"/><stop offset=".7" stop-color="#1a1b1e"/><stop offset="1" stop-color="#55585c"/></linearGradient><linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#737980"/><stop offset="1" stop-color="#25282d"/></linearGradient></defs><ellipse cx="310" cy="213" rx="225" ry="20" fill="#000" opacity=".5"/><path d="M73 165 L103 127 Q127 112 190 100 L247 53 Q268 36 321 37 L390 43 Q419 48 452 87 L502 111 Q527 121 536 151 L526 178 L481 191 L127 190 L82 181Z" fill="url(#carpaint)" stroke="#777a7e" stroke-width="2"/><path d="M211 98 L260 57 Q276 47 319 48 L373 53 Q394 57 423 91Z" fill="url(#glass)" stroke="#777" stroke-width="2"/><path d="M326 50 L323 97 L432 94" fill="none" stroke="#222" stroke-width="5"/><path d="M208 101 L184 137 L425 135 L435 96" fill="#25272a" opacity=".8"/><path d="M104 135 L182 128 L160 145 L91 153Z" fill="#d9e7ee" opacity=".9"/><path d="M450 115 L500 132 L510 143 L463 137Z" fill="#ed6d52" opacity=".85"/><path d="M95 158 L160 162 M444 160 L515 157" stroke="#a5a7aa" stroke-width="3" opacity=".5"/><path d="M175 179 L427 179 L456 190 L148 190Z" fill="#111214"/><circle cx="180" cy="180" r="39" fill="#101113" stroke="#666a70" stroke-width="5"/><circle cx="180" cy="180" r="25" fill="#303339" stroke="#8b8e93" stroke-width="3"/><circle cx="180" cy="180" r="7" fill="#aeb1b7"/><g stroke="#92959a" stroke-width="3"><path d="M180 157V203 M157 180H203 M164 164L196 196 M196 164L164 196"/></g><circle cx="447" cy="180" r="36" fill="#101113" stroke="#666a70" stroke-width="5"/><circle cx="447" cy="180" r="23" fill="#303339" stroke="#8b8e93" stroke-width="3"/><circle cx="447" cy="180" r="6" fill="#aeb1b7"/><g stroke="#92959a" stroke-width="3"><path d="M447 159V201 M426 180H468 M432 165L462 195 M462 165L432 195"/></g></svg><div id="genericAssetArt" class="generic-asset-art hidden">◇</div></div><div class="asset-carousel-controls"><button type="button" data-carousel-step="-1" aria-label="دارایی قبلی">‹</button><div id="assetCarouselDots" class="asset-carousel-dots"></div><button type="button" data-carousel-step="1" aria-label="دارایی بعدی">›</button><span id="assetCount" class="count-pill">۰ دارایی</span><span id="assetCarouselCount">۰ / ۰</span></div>
-<div class="hero-title"><div><h2 id="heroAssetName">خودروی من <span>مدل و مشخصات</span></h2><p class="muted" id="heroAssetSubtitle">پروفایل دارایی و سرویس‌های دوره‌ای</p></div><div class="metric"><strong id="heroOdometer">—</strong><span id="heroMetricLabel">کیلومتر</span></div></div>
-<div class="identity-panel"><div class="identity-row"><span class="line-icon">▦</span><div><small>مشخصات دارایی</small><strong id="assetIdentity">دارایی‌ای ثبت نشده</strong></div><button class="small-btn" id="editAssetBtn" type="button">ویرایش</button></div><div class="identity-row"><span class="line-icon">◷</span><div><small>نزدیک‌ترین سرویس</small><strong id="assetNextService">برای این دارایی سرویسی تعریف نشده</strong></div><button class="small-btn" id="viewAssetServicesBtn" type="button">برنامه سرویس</button></div></div>
-</section>
-<section class="section-head urgent-head app-page" data-page="dashboard" id="urgentHead"><div><p class="eyebrow">فقط موارد ضروری</p><h2>نیازمند رسیدگی</h2></div><span class="count-pill" id="urgentCount">۰ مورد</span></section>
-<section class="urgent-list app-page" data-page="dashboard" id="urgentList"><div class="urgent-empty">فعلاً مورد عقب‌افتاده‌ای نداری.</div></section>
-<section class="section-head app-page" data-page="services"><div><p class="eyebrow">برنامه‌ریزی نگهداری</p><h2>سرویس‌ها</h2><p class="muted">یادآوری‌ها را مدیریت کن و سرویس انجام‌شده را ثبت کن.</p></div><div class="section-actions"><button id="addReminderBtn" class="text-action" type="button">＋ تعریف سرویس</button><button id="addServiceBtn" class="text-action" type="button">＋ ثبت سرویس مستقل</button></div></section>
-<section class="service-grid app-page" data-page="services" id="reminderList"><article class="service-card sample"><div class="service-title"><span class="service-icon warn">△</span><strong>سرویس‌های دوره‌ای</strong><span class="chevron">‹</span></div><div class="service-meta"><span>▦</span> هنوز موردی ثبت نشده</div><div class="service-meta"><span>◷</span> اولین یادآوری را اضافه کن</div><div class="gauge blue"><span>—</span></div></article></section>
-<section class="section-head app-page" data-page="dashboard"><div><p class="eyebrow">آخرین فعالیت‌ها</p><h2 id="recentServicesHeading">۵ سرویس اخیر</h2></div><a class="text-action" href="#serviceHistoryView" data-page-nav="history">مشاهده همه سوابق ←</a></section>
-<section class="panel recent-services-panel app-page" data-page="dashboard"><div id="recentServicesList" class="recent-services-list"><p class="muted">سرویس‌های ثبت‌شده اینجا نمایش داده می‌شوند.</p></div></section>
-<section class="section-head asset-section-head app-page" data-page="assets" id="otherAssets"><div><p class="eyebrow">فهرست و دسته‌بندی</p><h2>دارایی‌های من</h2><p class="muted">دارایی‌ها بر اساس نوع گروه‌بندی شده‌اند.</p></div><button id="addOtherAssetBtn" class="button button-primary" type="button">＋ افزودن دارایی</button></section>
-<section class="panel app-page" data-page="assets"><div id="assetList" class="list-empty compact"><div class="empty-icon">◇</div><strong>هنوز دارایی‌ای اضافه نکرده‌ای</strong><p>از دکمهٔ + برای ثبت اولین دارایی استفاده کن.</p></div></section>
-<section class="panel service-history-panel app-page" data-page="history" id="serviceHistoryView">
-<div class="section-head inline"><div><p class="eyebrow">گزارش و جست‌وجو</p><h2>همه سوابق سرویس‌ها</h2><p class="muted">به‌صورت پیش‌فرض، سوابق ماه قبل نمایش داده می‌شود.</p></div></div>
-<div class="history-filters"><label>نوع دارایی<select id="historyAssetCategory"><option value="">همه دسته‌ها</option></select></label>
-<label>از تاریخ<input id="historyFrom" class="jalali-date" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۶/۰۱" autocomplete="off"></label>
-<label>تا تاریخ<input id="historyTo" class="jalali-date" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۶/۳۱" autocomplete="off"></label>
-<div class="history-filter-actions"><button id="applyServiceFilters" class="button button-primary" type="button">اعمال فیلتر</button><button id="resetServiceFilters" class="button button-plain" type="button">ماه قبل</button></div></div>
-<div id="allServicesSummary" class="history-summary"></div><div id="allServicesList" class="all-services-list"><p class="muted">هنوز سابقه‌ای ثبت نشده است.</p></div></section>
-<section class="panel reminders-panel app-page" data-page="services" id="schedule"><div class="section-head inline"><div><p class="eyebrow">پیگیری جداگانه</p><h2>برنامه سرویس‌ها</h2></div><span class="count-pill" id="doneCount">۰ انجام‌شده</span></div><div id="scheduleList" class="reminder-detail-empty">یادآوری‌های ثبت‌شده در این بخش نمایش داده می‌شوند.</div><div class="schedule-subhead">سرویس‌های انجام‌شده</div><div id="completedServicesList" class="all-services-list"><p class="muted">هنوز سرویس انجام‌شده‌ای ثبت نشده است.</p></div></section>
-<section class="app-page more-page" data-page="more"><div class="page-intro"><p class="eyebrow">ابزارهای برنامه</p><h2>بیشتر</h2><p>سوابق، گزارش هزینه‌ها و مدیریت اطلاعات را از اینجا باز کن.</p></div><div class="shortcut-grid"><button class="shortcut-card" data-open-page="history"><span>◷</span><strong>سوابق سرویس‌ها</strong><small>جست‌وجو و فیلتر همه سرویس‌ها</small></button><button class="shortcut-card" data-open-page="reports"><span>▥</span><strong>گزارش هزینه‌ها</strong><small>جمع هزینه‌ها و تفکیک بر اساس دارایی</small></button><button class="shortcut-card" id="moreBackupBtn"><span>⇩</span><strong>پشتیبان‌گیری</strong><small>خروجی گرفتن از اطلاعات فعلی</small></button><button class="shortcut-card" id="moreRestoreBtn"><span>↥</span><strong>بازیابی پشتیبان</strong><small>بازیابی از فایل JSON</small></button></div><div class="notice"><strong>ذخیره‌سازی اطلاعات</strong><p>اطلاعات در حافظه همین مرورگر نگهداری می‌شود. برای انتقال دستگاه، مرتب پشتیبان بگیر.</p></div><input id="importFile" type="file" accept="application/json" hidden></section>
-<section class="app-page reports-page" data-page="reports"><div class="page-intro"><p class="eyebrow">مرور مالی</p><h2>گزارش هزینه‌ها</h2><p>خلاصه هزینه‌های ثبت‌شده بر اساس اطلاعات موجود.</p></div><div id="reportSummary" class="report-summary"></div><div class="panel"><h3>هزینه به تفکیک دارایی</h3><div id="reportAssetBreakdown" class="report-breakdown"></div></div><button class="button button-plain page-back" data-open-page="more" type="button">← بازگشت به بیشتر</button></section>
-</main>
-<nav class="bottom-nav" aria-label="ناوبری"><a class="active" href="#top" data-page-nav="dashboard" aria-current="page"><span>⌂</span>خانه</a><a href="#otherAssets" data-page-nav="assets"><span>▤</span>دارایی‌ها</a><button id="navAddBtn" aria-label="ثبت جدید" class="nav-add">＋</button><a href="#reminderList" data-page-nav="services"><span>◇</span>سرویس‌ها</a><a href="#more" data-page-nav="more"><span>•••</span>بیشتر</a></nav>
-<dialog id="assetDialog"><form id="assetForm" method="dialog"><div class="dialog-head"><h2 id="assetDialogTitle">افزودن دارایی</h2><button class="close-btn" type="button" data-close="assetDialog">×</button></div>
-<label>نام دارایی<input name="name" required maxlength="80" placeholder="مثلاً پژو ۲۰۶"></label>
-<label>دسته‌بندی<select name="category"><option value="خودرو">خودرو</option><option value="موتورسیکلت">موتورسیکلت</option><option value="خانه">خانه</option><option value="وسایل">وسایل</option><option value="مالی">مالی</option><option value="شخصی">شخصی</option><option value="سلامت">سلامت</option></select></label>
-<div id="categoryFields" class="vehicle-fields"></div><label>معیار اصلی پیگیری<select name="metricUnit" id="assetMetricUnit"><option value="کیلومتر">کیلومتر</option><option value="متر مربع">متراژ (متر مربع)</option><option value="ساعت">ساعت کارکرد</option><option value="روز">روز</option><option value="ماه">ماه</option><option value="سال">سال</option><option value="تعداد">تعداد / دفعات</option></select></label><label id="assetMetricValueField" class="hidden">مقدار فعلی این معیار<input name="metricValue" type="number" min="0" step="any" placeholder="مقدار فعلی"></label>
-<label>توضیحات<textarea name="notes" rows="2" maxlength="500"></textarea></label><div class="form-actions"><button class="button button-primary" type="submit">ذخیره</button><button class="button button-plain" type="button" data-close="assetDialog">لغو</button></div></form></dialog>
-<dialog id="reminderDialog"><form id="reminderForm" method="dialog"><div class="dialog-head"><h2>تعریف سرویس</h2><button class="close-btn" type="button" data-close="reminderDialog">×</button></div>
-<label>عنوان سرویس<input name="title" required maxlength="100" placeholder="مثلاً تعویض روغن"></label><label>دارایی مرتبط<select name="assetId" id="reminderAsset"></select></label>
-<label>سررسید بر اساس<select name="triggerType" id="reminderTriggerType"><option value="date">تاریخ</option><option value="odometer">معیار دارایی</option><option value="both">تاریخ و معیار دارایی (هرکدام زودتر)</option></select></label>
-<label id="reminderDateField">تاریخ سررسید<input name="dueDate" class="jalali-date" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۷/۲۸" autocomplete="off"></label><label id="reminderCounterField">مقدار سررسید <span id="reminderCounterLabel">کیلومتر</span><input name="dueOdometer" id="reminderCounterValue" type="number" min="0" step="any" placeholder="مقدار سررسید"></label>
-<div class="repeat-rule"><label>تکرار هر چند واحد؟<input name="intervalValue" type="number" min="0" step="any" placeholder="اختیاری"></label><label>واحد تکرار<select name="intervalUnit" id="intervalUnit"><option value="days">روز</option><option value="months">ماه</option><option value="years">سال</option><option value="counter">معیار دارایی</option></select></label></div>
-<label>وابسته به سرویس<select name="dependsOn" id="dependsOn"><option value="">بدون وابستگی</option></select></label><label>یادداشت<textarea name="notes" rows="2" maxlength="500" placeholder="قطعه، نوع روغن یا جزئیات"></textarea></label>
-<div class="form-actions"><button class="button button-primary" type="submit">ذخیره سرویس</button><button class="button button-plain" type="button" data-close="reminderDialog">لغو</button></div></form></dialog>
-<dialog id="serviceDialog"><form id="serviceForm" method="dialog"><div class="dialog-head"><h2>ثبت انجام سرویس</h2><button class="close-btn" type="button" data-close="serviceDialog">×</button></div><label>سرویس تعریف‌شده (اختیاری)<select name="reminderId" id="serviceReminder"><option value="">سرویس مستقل</option></select></label><label>دارایی مرتبط<select name="assetId" id="serviceAsset"><option value="">بدون دارایی مشخص</option></select></label>
-<label>تاریخ انجام<input name="date" class="jalali-date" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۷/۲۸" autocomplete="off" required></label><label id="serviceCounterField">مقدار معیار دارایی هنگام انجام (<span id="serviceCounterLabel">کیلومتر</span>)<input name="odometer" id="serviceCounterValue" type="number" min="0" step="any"></label><label>نام قطعه / نوع روغن<input name="part" maxlength="120" placeholder="مثلاً روغن 10W-40"></label><label>هزینه (تومان)<input name="cost" type="number" min="0" step="1000"></label><label>توضیحات<textarea name="notes" rows="2" maxlength="1000"></textarea></label><label>تصویر فاکتور یا مدرک<input name="attachment" type="file" accept="image/*,.pdf"></label><div class="form-actions"><button class="button button-primary" type="submit">ثبت در سوابق</button><button class="button button-plain" type="button" data-close="serviceDialog">لغو</button></div></form></dialog>
-<dialog id="historyDialog"><div class="dialog-head"><h2>سوابق و هزینه‌ها</h2><button class="close-btn" type="button" data-close="historyDialog">×</button></div><div id="historyContent"></div></dialog>
-<dialog id="quickAddDialog" class="quick-add-dialog"><div class="dialog-head"><div><p class="eyebrow">اقدام سریع</p><h2>چه چیزی ثبت کنیم؟</h2></div><button class="close-btn" type="button" data-close="quickAddDialog">×</button></div><div class="quick-add-options"><button type="button" data-quick-action="asset"><span>◇</span><strong>دارایی جدید</strong><small>خودرو، خانه یا وسیله</small></button><button type="button" data-quick-action="reminder"><span>◷</span><strong>سرویس یا یادآوری</strong><small>تعریف سرویس آینده</small></button><button type="button" data-quick-action="service"><span>✓</span><strong>ثبت سرویس انجام‌شده</strong><small>ثبت هزینه و سابقه</small></button></div></dialog>
-<div id="toast" role="status" aria-live="polite" class="toast hidden"></div><script src="./app.js?v=20261020-14"></script></body></html>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#202123">
+    <meta name="description" content="مدیریت سرویس و نگهداری خودرو">
+    <title>همراه من</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <link rel="stylesheet" href="./styles.css?v=20261020-13">
+</head>
+
+<body>
+    <header class="topbar" id="top">
+        <div class="brand"><span class="brand-mark">◈</span>
+            <div>
+                <p class="eyebrow" id="pageEyebrow">مدیریت دارایی و نگهداری</p>
+                <h1 id="pageTitle">خانه</h1>
+            </div>
+        </div><button id="installBtn" class="button button-light hidden" type="button">نصب</button><button
+            class="round-btn" id="addAssetBtn" aria-label="افزودن دارایی">＋</button>
+    </header>
+    <main class="container">
+        <section class="asset-hero app-page" data-page="dashboard">
+            <div class="hero-top"><span class="tiny-pill"><i></i> دارایی منتخب</span><button class="round-btn more-btn"
+                    aria-label="گزینه‌ها">•••</button></div>
+            <div class="vehicle-art" id="vehicleArt" aria-hidden="true"><svg viewBox="0 0 620 250" role="img">
+                    <defs>
+                        <linearGradient id="carpaint" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#777a7e" />
+                            <stop offset=".42" stop-color="#34363a" />
+                            <stop offset=".7" stop-color="#1a1b1e" />
+                            <stop offset="1" stop-color="#55585c" />
+                        </linearGradient>
+                        <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+                            <stop stop-color="#737980" />
+                            <stop offset="1" stop-color="#25282d" />
+                        </linearGradient>
+                    </defs>
+                    <ellipse cx="310" cy="213" rx="225" ry="20" fill="#000" opacity=".5" />
+                    <path
+                        d="M73 165 L103 127 Q127 112 190 100 L247 53 Q268 36 321 37 L390 43 Q419 48 452 87 L502 111 Q527 121 536 151 L526 178 L481 191 L127 190 L82 181Z"
+                        fill="url(#carpaint)" stroke="#777a7e" stroke-width="2" />
+                    <path d="M211 98 L260 57 Q276 47 319 48 L373 53 Q394 57 423 91Z" fill="url(#glass)" stroke="#777"
+                        stroke-width="2" />
+                    <path d="M326 50 L323 97 L432 94" fill="none" stroke="#222" stroke-width="5" />
+                    <path d="M208 101 L184 137 L425 135 L435 96" fill="#25272a" opacity=".8" />
+                    <path d="M104 135 L182 128 L160 145 L91 153Z" fill="#d9e7ee" opacity=".9" />
+                    <path d="M450 115 L500 132 L510 143 L463 137Z" fill="#ed6d52" opacity=".85" />
+                    <path d="M95 158 L160 162 M444 160 L515 157" stroke="#a5a7aa" stroke-width="3" opacity=".5" />
+                    <path d="M175 179 L427 179 L456 190 L148 190Z" fill="#111214" />
+                    <circle cx="180" cy="180" r="39" fill="#101113" stroke="#666a70" stroke-width="5" />
+                    <circle cx="180" cy="180" r="25" fill="#303339" stroke="#8b8e93" stroke-width="3" />
+                    <circle cx="180" cy="180" r="7" fill="#aeb1b7" />
+                    <g stroke="#92959a" stroke-width="3">
+                        <path d="M180 157V203 M157 180H203 M164 164L196 196 M196 164L164 196" />
+                    </g>
+                    <circle cx="447" cy="180" r="36" fill="#101113" stroke="#666a70" stroke-width="5" />
+                    <circle cx="447" cy="180" r="23" fill="#303339" stroke="#8b8e93" stroke-width="3" />
+                    <circle cx="447" cy="180" r="6" fill="#aeb1b7" />
+                    <g stroke="#92959a" stroke-width="3">
+                        <path d="M447 159V201 M426 180H468 M432 165L462 195 M462 165L432 195" />
+                    </g>
+                </svg>
+                <div id="genericAssetArt" class="generic-asset-art hidden">◇</div>
+            </div>
+            <div class="asset-carousel-controls"><button type="button" data-carousel-step="-1"
+                    aria-label="دارایی قبلی">‹</button>
+                <div id="assetCarouselDots" class="asset-carousel-dots"></div><button type="button"
+                    data-carousel-step="1" aria-label="دارایی بعدی">›</button><span id="assetCount" class="count-pill">۰
+                    دارایی</span><span id="assetCarouselCount">۰ / ۰</span>
+            </div>
+            <div class="hero-title">
+                <div>
+                    <h2 id="heroAssetName">خودروی من <span>مدل و مشخصات</span></h2>
+                    <p class="muted" id="heroAssetSubtitle">پروفایل دارایی و سرویس‌های دوره‌ای</p>
+                </div>
+                <div class="metric"><strong id="heroOdometer">—</strong><span id="heroMetricLabel">کیلومتر</span></div>
+            </div>
+            <div class="identity-panel">
+                <div class="identity-row"><span class="line-icon">▦</span>
+                    <div><small>مشخصات دارایی</small><strong id="assetIdentity">دارایی‌ای ثبت نشده</strong></div><button
+                        class="small-btn" id="editAssetBtn" type="button">ویرایش</button>
+                </div>
+                <div class="identity-row"><span class="line-icon">◷</span>
+                    <div><small>نزدیک‌ترین سرویس</small><strong id="assetNextService">برای این دارایی سرویسی تعریف
+                            نشده</strong></div><button class="small-btn" id="viewAssetServicesBtn" type="button">برنامه
+                        سرویس</button>
+                </div>
+            </div>
+        </section>
+        <section class="section-head urgent-head app-page" data-page="dashboard" id="urgentHead">
+            <div>
+                <p class="eyebrow">فقط موارد ضروری</p>
+                <h2>نیازمند رسیدگی</h2>
+            </div><span class="count-pill" id="urgentCount">۰ مورد</span>
+        </section>
+        <section class="urgent-list app-page" data-page="dashboard" id="urgentList">
+            <div class="urgent-empty">فعلاً مورد عقب‌افتاده‌ای نداری.</div>
+        </section>
+        <section class="section-head app-page" data-page="services">
+            <div>
+                <p class="eyebrow">برنامه‌ریزی نگهداری</p>
+                <h2>سرویس‌ها</h2>
+                <p class="muted">یادآوری‌ها را مدیریت کن و سرویس انجام‌شده را ثبت کن.</p>
+            </div>
+            <div class="section-actions"><button id="addReminderBtn" class="text-action" type="button">＋ تعریف
+                    سرویس</button><button id="addServiceBtn" class="text-action" type="button">＋ ثبت سرویس
+                    مستقل</button></div>
+        </section>
+        <section class="service-grid app-page" data-page="services" id="reminderList">
+            <article class="service-card sample">
+                <div class="service-title"><span class="service-icon warn">△</span><strong>سرویس‌های
+                        دوره‌ای</strong><span class="chevron">‹</span></div>
+                <div class="service-meta"><span>▦</span> هنوز موردی ثبت نشده</div>
+                <div class="service-meta"><span>◷</span> اولین یادآوری را اضافه کن</div>
+                <div class="gauge blue"><span>—</span></div>
+            </article>
+        </section>
+        <section class="section-head app-page" data-page="dashboard">
+            <div>
+                <p class="eyebrow">آخرین فعالیت‌ها</p>
+                <h2 id="recentServicesHeading">۵ سرویس اخیر</h2>
+            </div><a class="text-action" href="#serviceHistoryView" data-page-nav="history">مشاهده همه سوابق ←</a>
+        </section>
+        <section class="panel recent-services-panel app-page" data-page="dashboard">
+            <div id="recentServicesList" class="recent-services-list">
+                <p class="muted">سرویس‌های ثبت‌شده اینجا نمایش داده می‌شوند.</p>
+            </div>
+        </section>
+        <section class="section-head asset-section-head app-page" data-page="assets" id="otherAssets">
+            <div>
+                <p class="eyebrow">فهرست و دسته‌بندی</p>
+                <h2>دارایی‌های من</h2>
+                <p class="muted">دارایی‌ها بر اساس نوع گروه‌بندی شده‌اند.</p>
+            </div><button id="addOtherAssetBtn" class="button button-primary" type="button">＋ افزودن دارایی</button>
+        </section>
+        <section class="panel app-page" data-page="assets">
+            <div id="assetList" class="list-empty compact">
+                <div class="empty-icon">◇</div><strong>هنوز دارایی‌ای اضافه نکرده‌ای</strong>
+                <p>از دکمهٔ + برای ثبت اولین دارایی استفاده کن.</p>
+            </div>
+        </section>
+        
+        <section class="panel reminders-panel app-page" data-page="services" id="schedule">
+            <div class="section-head inline">
+                <div>
+                    
+                    <h2>برنامه سرویس‌ها</h2>
+                </div><span class="count-pill" id="doneCount">۰ انجام‌شده</span>
+            </div>
+<div id="completedServiceFilters" class="history-filters">
+  <label>
+    نوع دارایی
+    <select id="completedAssetCategory">
+      <option value="">همه انواع دارایی</option>
+    </select>
+  </label>
+
+  <label>
+    نام دارایی
+    <select id="completedAssetName">
+      <option value="">همه دارایی‌ها</option>
+    </select>
+  </label>
+
+  <label>
+    از تاریخ
+    <input id="completedFrom" class="jalali-date" type="text"
+      inputmode="numeric" placeholder="۱۴۰۵/۰۷/۰۱" autocomplete="off">
+  </label>
+
+  <label>
+    تا تاریخ
+    <input id="completedTo" class="jalali-date" type="text"
+      inputmode="numeric" placeholder="۱۴۰۵/۰۷/۳۰" autocomplete="off">
+  </label>
+
+  <div class="history-filter-actions">
+    <button id="applyCompletedFilters" class="button button-primary" type="button">
+      اعمال فیلتر
+    </button>
+    <button id="resetCompletedFilters" class="button button-plain" type="button">
+      پاک کردن فیلترها
+    </button>
+  </div>
+</div>
+
+<div id="completedServicesSummary" class="history-summary"></div>
+
+<div id="completedServicesList" class="all-services-list">
+  <p class="muted">در حال بارگذاری سوابق سرویس‌ها...</p>
+</div>
+
+        </section>
+        <section class="app-page more-page" data-page="more">
+            <div class="page-intro">
+                <p class="eyebrow">ابزارهای برنامه</p>
+                <h2>بیشتر</h2>
+                <p>سوابق، گزارش هزینه‌ها و مدیریت اطلاعات را از اینجا باز کن.</p>
+            </div>
+            <div class="shortcut-grid"><button class="shortcut-card"
+                    data-open-page="history"><span>◷</span><strong>سوابق سرویس‌ها</strong><small>جست‌وجو و فیلتر همه
+                        سرویس‌ها</small></button><button class="shortcut-card"
+                    data-open-page="reports"><span>▥</span><strong>گزارش هزینه‌ها</strong><small>جمع هزینه‌ها و تفکیک بر
+                        اساس دارایی</small></button><button class="shortcut-card"
+                    id="moreBackupBtn"><span>⇩</span><strong>پشتیبان‌گیری</strong><small>خروجی گرفتن از اطلاعات
+                        فعلی</small></button><button class="shortcut-card"
+                    id="moreRestoreBtn"><span>↥</span><strong>بازیابی پشتیبان</strong><small>بازیابی از فایل
+                        JSON</small></button></div>
+            <div class="notice"><strong>ذخیره‌سازی اطلاعات</strong>
+                <p>اطلاعات در حافظه همین مرورگر نگهداری می‌شود. برای انتقال دستگاه، مرتب پشتیبان بگیر.</p>
+            </div><input id="importFile" type="file" accept="application/json" hidden>
+        </section>
+        <section class="app-page reports-page" data-page="reports">
+            <div class="page-intro">
+                <p class="eyebrow">مرور مالی</p>
+                <h2>گزارش هزینه‌ها</h2>
+                <p>خلاصه هزینه‌های ثبت‌شده بر اساس اطلاعات موجود.</p>
+            </div>
+            <div id="reportSummary" class="report-summary"></div>
+            <div class="panel">
+                <h3>هزینه به تفکیک دارایی</h3>
+                <div id="reportAssetBreakdown" class="report-breakdown"></div>
+            </div><button class="button button-plain page-back" data-open-page="more" type="button">← بازگشت به
+                بیشتر</button>
+        </section>
+    </main>
+    <nav class="bottom-nav" aria-label="ناوبری"><a class="active" href="#top" data-page-nav="dashboard"
+            aria-current="page"><span>⌂</span>خانه</a><a href="#otherAssets"
+            data-page-nav="assets"><span>▤</span>دارایی‌ها</a><button id="navAddBtn" aria-label="ثبت جدید"
+            class="nav-add">＋</button><a href="#reminderList" data-page-nav="services"><span>◇</span>سرویس‌ها</a><a
+            href="#more" data-page-nav="more"><span>•••</span>بیشتر</a></nav>
+    <dialog id="assetDialog">
+        <form id="assetForm" method="dialog">
+            <div class="dialog-head">
+                <h2 id="assetDialogTitle">افزودن دارایی</h2><button class="close-btn" type="button"
+                    data-close="assetDialog">×</button>
+            </div>
+            <label>نام دارایی<input name="name" required maxlength="80" placeholder="مثلاً پژو ۲۰۶"></label>
+            <label>دسته‌بندی<select name="category">
+                    <option value="خودرو">خودرو</option>
+                    <option value="موتورسیکلت">موتورسیکلت</option>
+                    <option value="خانه">خانه</option>
+                    <option value="وسایل">وسایل</option>
+                    <option value="مالی">مالی</option>
+                    <option value="شخصی">شخصی</option>
+                    <option value="سلامت">سلامت</option>
+                </select></label>
+            <div id="categoryFields" class="vehicle-fields"></div><label>معیار اصلی پیگیری<select name="metricUnit"
+                    id="assetMetricUnit">
+                    <option value="کیلومتر">کیلومتر</option>
+                    <option value="متر مربع">متراژ (متر مربع)</option>
+                    <option value="ساعت">ساعت کارکرد</option>
+                    <option value="روز">روز</option>
+                    <option value="ماه">ماه</option>
+                    <option value="سال">سال</option>
+                    <option value="تعداد">تعداد / دفعات</option>
+                </select></label><label id="assetMetricValueField" class="hidden">مقدار فعلی این معیار<input
+                    name="metricValue" type="number" min="0" step="any" placeholder="مقدار فعلی"></label>
+            <label>توضیحات<textarea name="notes" rows="2" maxlength="500"></textarea></label>
+            <div class="form-actions"><button class="button button-primary" type="submit">ذخیره</button><button
+                    class="button button-plain" type="button" data-close="assetDialog">لغو</button></div>
+        </form>
+    </dialog>
+    <dialog id="reminderDialog">
+        <form id="reminderForm" method="dialog">
+            <div class="dialog-head">
+                <h2>تعریف سرویس</h2><button class="close-btn" type="button" data-close="reminderDialog">×</button>
+            </div>
+            <label>عنوان سرویس<input name="title" required maxlength="100"
+                    placeholder="مثلاً تعویض روغن"></label><label>دارایی مرتبط<select name="assetId"
+                    id="reminderAsset"></select></label>
+            <label>سررسید بر اساس<select name="triggerType" id="reminderTriggerType">
+                    <option value="date">تاریخ</option>
+                    <option value="odometer">معیار دارایی</option>
+                    <option value="both">تاریخ و معیار دارایی (هرکدام زودتر)</option>
+                </select></label>
+            <label id="reminderDateField">تاریخ سررسید<input name="dueDate" class="jalali-date" type="text"
+                    inputmode="numeric" placeholder="۱۴۰۵/۰۷/۲۸" autocomplete="off"></label><label
+                id="reminderCounterField">مقدار سررسید <span id="reminderCounterLabel">کیلومتر</span><input
+                    name="dueOdometer" id="reminderCounterValue" type="number" min="0" step="any"
+                    placeholder="مقدار سررسید"></label>
+            <div class="repeat-rule"><label>تکرار هر چند واحد؟<input name="intervalValue" type="number" min="0"
+                        step="any" placeholder="اختیاری"></label><label>واحد تکرار<select name="intervalUnit"
+                        id="intervalUnit">
+                        <option value="days">روز</option>
+                        <option value="months">ماه</option>
+                        <option value="years">سال</option>
+                        <option value="counter">معیار دارایی</option>
+                    </select></label></div>
+            <label>وابسته به سرویس<select name="dependsOn" id="dependsOn">
+                    <option value="">بدون وابستگی</option>
+                </select></label><label>یادداشت<textarea name="notes" rows="2" maxlength="500"
+                    placeholder="قطعه، نوع روغن یا جزئیات"></textarea></label>
+            <div class="form-actions"><button class="button button-primary" type="submit">ذخیره سرویس</button><button
+                    class="button button-plain" type="button" data-close="reminderDialog">لغو</button></div>
+        </form>
+    </dialog>
+    <dialog id="serviceDialog">
+        <form id="serviceForm" method="dialog">
+            <div class="dialog-head">
+                <h2>ثبت انجام سرویس</h2><button class="close-btn" type="button" data-close="serviceDialog">×</button>
+            </div><label>سرویس تعریف‌شده (اختیاری)<select name="reminderId" id="serviceReminder">
+                    <option value="">سرویس مستقل</option>
+                </select></label><label>دارایی مرتبط<select name="assetId" id="serviceAsset">
+                    <option value="">بدون دارایی مشخص</option>
+                </select></label>
+            <label>تاریخ انجام<input name="date" class="jalali-date" type="text" inputmode="numeric"
+                    placeholder="۱۴۰۵/۰۷/۲۸" autocomplete="off" required></label><label id="serviceCounterField">مقدار
+                معیار دارایی هنگام انجام (<span id="serviceCounterLabel">کیلومتر</span>)<input name="odometer"
+                    id="serviceCounterValue" type="number" min="0" step="any"></label><label>نام قطعه / نوع روغن<input
+                    name="part" maxlength="120" placeholder="مثلاً روغن 10W-40"></label><label>هزینه (تومان)<input
+                    name="cost" type="number" min="0" step="1000"></label><label>توضیحات<textarea name="notes" rows="2"
+                    maxlength="1000"></textarea></label><label>تصویر فاکتور یا مدرک<input name="attachment" type="file"
+                    accept="image/*,.pdf"></label>
+            <div class="form-actions"><button class="button button-primary" type="submit">ثبت در سوابق</button><button
+                    class="button button-plain" type="button" data-close="serviceDialog">لغو</button></div>
+        </form>
+    </dialog>
+    <dialog id="historyDialog">
+        <div class="dialog-head">
+            <h2>سوابق و هزینه‌ها</h2><button class="close-btn" type="button" data-close="historyDialog">×</button>
+        </div>
+        <div id="historyContent"></div>
+    </dialog>
+    <dialog id="quickAddDialog" class="quick-add-dialog">
+        <div class="dialog-head">
+            <div>
+                <p class="eyebrow">اقدام سریع</p>
+                <h2>چه چیزی ثبت کنیم؟</h2>
+            </div><button class="close-btn" type="button" data-close="quickAddDialog">×</button>
+        </div>
+        <div class="quick-add-options"><button type="button" data-quick-action="asset"><span>◇</span><strong>دارایی
+                    جدید</strong><small>خودرو، خانه یا وسیله</small></button><button type="button"
+                data-quick-action="reminder"><span>◷</span><strong>سرویس یا یادآوری</strong><small>تعریف سرویس
+                    آینده</small></button><button type="button" data-quick-action="service"><span>✓</span><strong>ثبت
+                    سرویس انجام‌شده</strong><small>ثبت هزینه و سابقه</small></button></div>
+    </dialog>
+    <div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
+    <script src="./app.js?v=20261020-13"></script>
+</body>
+
+</html>
