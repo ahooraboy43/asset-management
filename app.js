@@ -339,3 +339,5 @@ function dueSoon(r){const a=state.assets.find(x=>x.id===r.assetId),m=dashboardMe
 render();
 
 let carouselTouchStartX=0;document.querySelector(".asset-hero")?.addEventListener("touchstart",e=>{carouselTouchStartX=e.changedTouches?.[0]?.clientX||0},{passive:true});document.querySelector(".asset-hero")?.addEventListener("touchend",e=>{const end=e.changedTouches?.[0]?.clientX||0,delta=end-carouselTouchStartX;if(Math.abs(delta)>45)moveDashboardAsset(delta<0?1:-1)},{passive:true});
+
+const openServiceFormBase=openServiceForm;openServiceForm=function(reminderId=""){openServiceFormBase(reminderId);syncDashboardMetric(state.assets.find(a=>a.id===$("serviceAsset").value));};$("serviceReminder")?.addEventListener("change",()=>syncDashboardMetric(state.assets.find(a=>a.id===$("serviceAsset").value)));$("addReminderBtn")?.addEventListener("click",()=>syncDashboardMetric(state.assets.find(a=>a.id===$("reminderAsset").value)));
