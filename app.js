@@ -120,6 +120,7 @@ function assetShortDescription(a){
  if(a.notes)bits.push(a.notes);return bits.slice(0,4).join(" · ")||"بدون توضیحات تکمیلی";
 }
 function sortedServices(){return state.services.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||""))}
+function serviceAssetId(s){if(s?.assetId)return s.assetId;return state.reminders.find(r=>r.id===s?.reminderId)?.assetId||"";}
 function serviceRowHtml(s){
  const rem=state.reminders.find(r=>r.id===s.reminderId),asset=state.assets.find(a=>a.id===s.assetId)||state.assets.find(a=>a.id===rem?.assetId);
  const details=[rem?.title||"سرویس مستقل",asset?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" کیلومتر":"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
@@ -287,13 +288,13 @@ function renderHero(){
  const next=state.reminders.filter(r=>r.assetId===a?.id&&r.status==="open").sort((x,y)=>(x.dueDate||"9999").localeCompare(y.dueDate||"9999"))[0];
  $("assetNextService").textContent=next?next.title+" · "+(next.dueDate?fmtDate(next.dueDate):"سررسید ثبت نشده"):"برای این دارایی سرویسی تعریف نشده";
 }
-function moveDashboardAsset(step){const assets=state.assets.filter(a=>a.status!=="archived");if(!assets.length)return;let i=assets.findIndex(a=>a.id===state.selectedAssetId);i=(i+step+assets.length)%assets.length;state.selectedAssetId=assets[i].id;persist()}
+function moveDashboardAsset(step){const assets=state.assets.filter(a=>a.status!=="archived");if(!assets.length){toast("ابتدا یک دارایی ثبت کن.");return}let i=assets.findIndex(a=>a.id===state.selectedAssetId);if(i<0)i=0;i=(i+step+assets.length)%assets.length;state.selectedAssetId=assets[i].id;render()}
 function serviceRowHtml(s){
  const a=state.assets.find(x=>x.id===s.assetId),r=state.reminders.find(x=>x.id===s.reminderId),m=dashboardMetric(a);
  const details=[r?.title||"سرویس مستقل",a?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" "+m.unit:"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
  return '<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>'+esc(fmtDate(s.date))+' · '+fa(s.cost)+' تومان</strong><p>'+details+'</p>'+(s.attachmentName?'<small>پیوست: '+esc(s.attachmentName)+'</small>':'')+'<div class="item-actions"><button class="small-btn" data-action="edit-service" data-id="'+esc(s.id)+'">ویرایش</button><button class="small-btn danger" data-action="delete-service" data-id="'+esc(s.id)+'">حذف</button></div></div></article>';
 }
-function renderRecentServices(){const target=$("recentServicesList");if(!target)return;const a=dashboardAsset();if($("recentServicesHeading"))$("recentServicesHeading").textContent=a?"۵ سرویس اخیر · "+a.name:"۵ سرویس اخیر";const rows=sortedServices().filter(s=>!a||s.assetId===a.id).slice(0,5);target.innerHTML=rows.length?rows.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>هنوز سرویسی برای این دارایی ثبت نشده</strong><p>با جابه‌جایی بین دارایی‌ها، سوابق همان دارایی نمایش داده می‌شود.</p></div>'}
+function renderRecentServices(){const target=$("recentServicesList");if(!target)return;const a=dashboardAsset();if($("recentServicesHeading"))$("recentServicesHeading").textContent=a?"۵ سرویس اخیر · "+a.name:"۵ سرویس اخیر";const rows=sortedServices().filter(s=>!a||serviceAssetId(s)===a.id).slice(0,5);target.innerHTML=rows.length?rows.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>هنوز سرویسی برای این دارایی ثبت نشده</strong><p>با جابه‌جایی بین دارایی‌ها، سوابق همان دارایی نمایش داده می‌شود.</p></div>'}
 function syncDashboardMetric(a){
  const m=dashboardMetric(a),has=!!a;
  ["serviceCounterField","reminderCounterField","reminderIntervalCounterField"].forEach(id=>$(id)?.classList.toggle("hidden",!has));
