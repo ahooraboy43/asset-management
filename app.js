@@ -169,7 +169,7 @@ $("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
 $("exportBtn").addEventListener("click",exportBackup);
 $("moreBackupBtn")?.addEventListener("click",exportBackup);
 $("moreRestoreBtn")?.addEventListener("click",()=>$("importFile").click());
-$("importBtn").addEventListener("click",()=>$("importFile").click());
+$("importBtn")?.addEventListener("click",()=>$("importFile").click());
 $("importFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{const incoming=normalize(JSON.parse(await file.text()));if(!confirm("بازیابی، اطلاعات فعلی را با نسخهٔ انتخاب‌شده جایگزین می‌کند. ابتدا از اطلاعات فعلی پشتیبان بگیر. ادامه؟"))return;state=incoming;persist();toast("پشتیبان بازیابی شد.")}catch{toast("فایل پشتیبان معتبر نیست.")}e.target.value=""});
 function exportBackup(){const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString(),app:"HamrahMan"},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="hamrah-man-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);toast("فایل پشتیبان دانلود شد.")}
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>close(b.dataset.close)));
