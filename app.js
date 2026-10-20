@@ -73,6 +73,13 @@ function refreshOptions(){
  if(serviceAsset){const old=serviceAsset.value;serviceAsset.innerHTML=assetOptions;if(old&&state.assets.some(a=>a.id===old))serviceAsset.value=old;}
  if(serviceReminder){const old=serviceReminder.value;serviceReminder.innerHTML='<option value="">سرویس مستقل / بدون عملیات</option>'+state.reminders.filter(r=>r.status!=="cancelled").map(r=>`<option value="${esc(r.id)}">${esc(r.title)}</option>`).join("");if(old&&state.reminders.some(r=>r.id===old))serviceReminder.value=old;}
 }
+function renderReports(){
+ const summary=$("reportSummary"),breakdown=$("reportAssetBreakdown");if(!summary||!breakdown)return;
+ const services=sortedServices(),total=services.reduce((sum,s)=>sum+(Number(s.cost)||0),0),month=today().slice(0,7),monthTotal=services.filter(s=>(s.date||"").startsWith(month)).reduce((sum,s)=>sum+(Number(s.cost)||0),0);
+ summary.innerHTML=`<div class="report-stat"><span>کل هزینه‌های ثبت‌شده</span><strong>${fa(total)} تومان</strong><small>${fa(services.length)} سرویس</small></div><div class="report-stat"><span>هزینه ماه جاری</span><strong>${fa(monthTotal)} تومان</strong><small>${fa(services.filter(s=>(s.date||"").startsWith(month)).length)} سرویس</small></div>`;
+ const groups=new Map();services.forEach(s=>{const asset=state.assets.find(a=>a.id===s.assetId),name=asset?.name||"بدون دارایی مشخص";groups.set(name,(groups.get(name)||0)+(Number(s.cost)||0))});
+ const rows=[...groups.entries()].sort((a,b)=>b[1]-a[1]);breakdown.innerHTML=rows.length?rows.map(([name,cost])=>`<div class="report-row"><span>${esc(name)}</span><strong>${fa(cost)} تومان</strong></div>`).join(""):'<p class="muted">پس از ثبت سرویس و هزینه، گزارش اینجا نمایش داده می‌شود.</p>';
+}
 function render(){
  const vehicle=selectedVehicle(), openRem=state.reminders.filter(r=>r.status==="open"), doneRem=state.reminders.filter(r=>r.status==="done");
  if($("assetCount")) $("assetCount").textContent=`${fa(state.assets.length)} دارایی ثبت‌شده`;
@@ -150,10 +157,16 @@ function showHistory(id){
 $("addAssetBtn").addEventListener("click",()=>{resetAssetForm();open("assetDialog")});
 $("addOtherAssetBtn").addEventListener("click",()=>{resetAssetForm();$("assetForm").elements.category.value="وسایل";open("assetDialog")});
 $("addReminderBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
-$("navAddBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
+$("navAddBtn").addEventListener("click",()=>{showQuickAddMenu()});
+function showQuickAddMenu(){
+ const choice=prompt("چه چیزی ثبت کنیم؟\\n1 - دارایی جدید\\n2 - تعریف سرویس یا یادآوری\\n3 - ثبت سرویس انجام‌شده","3");
+ if(choice==="1"){resetAssetForm();open("assetDialog")}else if(choice==="2"){$("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")}else if(choice==="3")openServiceForm("");
+}
 $("editAssetBtn").addEventListener("click",()=>{const a=selectedVehicle();a?editAsset(a.id):(resetAssetForm(),open("assetDialog"))});
 $("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
 $("exportBtn").addEventListener("click",exportBackup);
+$("moreBackupBtn")?.addEventListener("click",exportBackup);
+$("moreRestoreBtn")?.addEventListener("click",()=>$("importFile").click());
 $("importBtn").addEventListener("click",()=>$("importFile").click());
 $("importFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{const incoming=normalize(JSON.parse(await file.text()));if(!confirm("بازیابی، اطلاعات فعلی را با نسخهٔ انتخاب‌شده جایگزین می‌کند. ابتدا از اطلاعات فعلی پشتیبان بگیر. ادامه؟"))return;state=incoming;persist();toast("پشتیبان بازیابی شد.")}catch{toast("فایل پشتیبان معتبر نیست.")}e.target.value=""});
 function exportBackup(){const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString(),app:"HamrahMan"},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="hamrah-man-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);toast("فایل پشتیبان دانلود شد.")}
@@ -228,19 +241,23 @@ window.addEventListener("scroll",()=>{if(activeCalendarInput)drawJalaliCalendar(
 setupServiceHistoryFilters();
 // Bottom navigation switches distinct views instead of scrolling through one long page.
 function activatePage(page,updateHash=true){
- const valid=["dashboard","services","history","assets"].includes(page)?page:"dashboard";
+ const pageMeta={dashboard:["خانه","خلاصه وضعیت و آخرین فعالیت‌ها"],assets:["دارایی‌ها","مدیریت دسته‌بندی‌شده دارایی‌ها"],services:["سرویس‌ها","برنامه نگهداری و یادآوری‌ها"],history:["سوابق","جست‌وجوی سرویس‌های انجام‌شده"],more:["بیشتر","گزارش‌ها و ابزارهای برنامه"],reports:["گزارش‌ها","خلاصه هزینه‌ها"]};
+ const valid=["dashboard","services","history","assets","more","reports"].includes(page)?page:"dashboard";
  document.querySelectorAll("[data-page]").forEach(el=>el.classList.toggle("page-hidden",el.dataset.page!==valid));
+ const meta=pageMeta[valid]||pageMeta.dashboard;if($("pageTitle"))$("pageTitle").textContent=meta[0];if($("pageEyebrow"))$("pageEyebrow").textContent=meta[1];
+ if(valid==="reports")renderReports();
  document.querySelectorAll("[data-page-nav]").forEach(link=>{
   const active=link.dataset.pageNav===valid;
   link.classList.toggle("active",active);
   if(active)link.setAttribute("aria-current","page");else link.removeAttribute("aria-current");
  });
- if(updateHash){const target={dashboard:"top",services:"reminderList",history:"serviceHistoryView",assets:"otherAssets"}[valid];history.replaceState(null,"","#"+target);}
+ if(updateHash){const target={dashboard:"top",services:"reminderList",history:"serviceHistoryView",assets:"otherAssets",more:"more",reports:"reports"}[valid];history.replaceState(null,"","#"+target);}
  window.scrollTo({top:0,behavior:"instant"});
 }
 document.querySelectorAll("[data-page-nav]").forEach(link=>link.addEventListener("click",e=>{e.preventDefault();activatePage(link.dataset.pageNav)}));
-window.addEventListener("hashchange",()=>{const target=location.hash;activatePage(target==="#reminderList"?"services":target==="#serviceHistoryView"?"history":target==="#otherAssets"?"assets":"dashboard",false)});
-activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#otherAssets":"assets","#top":"dashboard"})[location.hash]||"dashboard",false);
+document.querySelectorAll("[data-open-page]").forEach(button=>button.addEventListener("click",()=>activatePage(button.dataset.openPage)));
+window.addEventListener("hashchange",()=>{const target=location.hash;activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#otherAssets":"assets","#top":"dashboard","#more":"more","#reports":"reports"})[target]||"dashboard",false)});
+activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#otherAssets":"assets","#top":"dashboard","#more":"more","#reports":"reports"})[location.hash]||"dashboard",false);
 $("applyServiceFilters")?.addEventListener("click",()=>{if(validateJalaliFields($("serviceHistoryView")))renderAllServices();});
 $("resetServiceFilters")?.addEventListener("click",()=>{const r=previousMonthRange();$("historyFrom").value=toJalaliInput(r.from);$("historyTo").value=toJalaliInput(r.to);$("historyAssetCategory").value="";renderAllServices();});
 render();
