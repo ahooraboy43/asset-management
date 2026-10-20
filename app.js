@@ -108,12 +108,100 @@ function render(){
   return `<section class="asset-category-group"><div class="asset-category-title"><strong>${esc(category)}</strong><span>${fa(items.length)} دارایی</span></div>${items.map(a=>`<article class="item asset-list-item"><div class="item-mark">◇</div><div class="item-main"><strong>${esc(a.name)}</strong><p>${esc(assetShortDescription(a))}</p><div class="item-actions"><button class="small-btn" data-action="edit-asset" data-id="${esc(a.id)}">ویرایش</button><button class="small-btn danger" data-action="delete-asset" data-id="${esc(a.id)}">بایگانی</button></div></div></article>`).join("")}</section>`;
  }).join(""):'<div class="empty-icon">◇</div><strong>هنوز دارایی‌ای اضافه نکرده‌ای</strong><p>خودرو، خانه، وسایل یا سایر دارایی‌ها را ثبت کن؛ هر دسته در این بخش جداگانه نمایش داده می‌شود.</p>';
  renderRecentServices();renderAllServices();
- const completedTarget=$("completedServicesList");if(completedTarget){const completed=sortedServices();completedTarget.innerHTML=completed.length?completed.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>هنوز سرویس انجام‌شده‌ای ثبت نشده است.</strong><p>بعد از ثبت سرویس، سوابق اینجا نمایش داده می‌شوند.</p></div>';}
+renderCompletedServices();
  $("doneCount").textContent=`${fa(doneRem.length)} انجام‌شده`;
  const reminderRows=state.reminders.filter(r=>r.status!=="cancelled").slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999")).map(r=>`<div class="schedule-row"><span class="schedule-status ${r.status==="done"?"complete":isLate(r)?"late":"pending"}"></span><div><strong>${esc(r.title)}</strong><small>${esc((state.assets.find(a=>a.id===r.assetId)||{}).name||"بدون دارایی")} · ${esc(fmtDate(r.dueDate))} · ${r.status==="done"?"انجام‌شده":isLate(r)?"عقب‌افتاده":"باز"}</small></div><button class="small-btn" data-action="history" data-id="${esc(r.id)}">سوابق</button></div>`).join("");
- $("scheduleList").innerHTML=`<div class="schedule-subhead">سرویس‌های تعریف‌شده و یادآوری‌ها</div>${reminderRows||"<p>هنوز سرویسی تعریف نشده است.</p>"}`;
- refreshOptions();
+
 }
+
+function renderCompletedServices() {
+  const list = $("completedServicesList");
+  const summary = $("completedServicesSummary");
+  const categorySelect = $("completedAssetCategory");
+  const nameSelect = $("completedAssetName");
+
+  if (!list || !summary || !categorySelect || !nameSelect) return;
+
+  const oldCategory = categorySelect.value;
+  const oldName = nameSelect.value;
+
+  const categories = [
+    ...new Set(state.assets.map(a => a.category || "سایر"))
+  ].sort((a, b) => a.localeCompare(b, "fa"));
+
+  categorySelect.innerHTML =
+    '<option value="">همه انواع دارایی</option>' +
+    categories.map(c =>
+      `<option value="${esc(c)}">${esc(c)}</option>`
+    ).join("");
+
+  if (categories.includes(oldCategory)) {
+    categorySelect.value = oldCategory;
+  }
+
+  const category = categorySelect.value;
+
+  const matchingAssets = state.assets.filter(a =>
+    !category || (a.category || "سایر") === category
+  );
+
+  nameSelect.innerHTML =
+    '<option value="">همه دارایی‌ها</option>' +
+    matchingAssets
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name, "fa"))
+      .map(a =>
+        `<option value="${esc(a.id)}">${esc(a.name)}</option>`
+      ).join("");
+
+  if (matchingAssets.some(a => a.id === oldName)) {
+    nameSelect.value = oldName;
+  }
+
+  const fromText = $("completedFrom").value.trim();
+  const toText = $("completedTo").value.trim();
+  const from = fromText ? toISODate(fromText) : "";
+  const to = toText ? toISODate(toText) : "";
+  const assetId = nameSelect.value;
+
+  const items = sortedServices().filter(s => {
+    const resolvedAssetId = serviceAssetId(s);
+    const asset = state.assets.find(a => a.id === resolvedAssetId);
+
+    if (category && (asset?.category || "سایر") !== category) {
+      return false;
+    }
+
+    if (assetId && resolvedAssetId !== assetId) {
+      return false;
+    }
+
+    if (fromText && !from) return false;
+    if (toText && !to) return false;
+
+    if (from && (!s.date || s.date < from)) return false;
+    if (to && (!s.date || s.date > to)) return false;
+
+    return true;
+  });
+
+  const total = items.reduce(
+    (sum, s) => sum + (Number(s.cost) || 0),
+    0
+  );
+
+  summary.innerHTML =
+    `<span>تعداد: <b>${fa(items.length)}</b></span>` +
+    `<span>جمع هزینه: <b>${fa(total)} تومان</b></span>`;
+
+  list.innerHTML = items.length
+    ? items.map(serviceRowHtml).join("")
+    : `<div class="list-empty compact">
+         <strong>سابقه‌ای مطابق فیلترها پیدا نشد</strong>
+         <p>نوع دارایی، نام دارایی یا بازه تاریخ را تغییر بده.</p>
+       </div>`;
+}
+
 function assetShortDescription(a){
  const bits=[];
  if(["خودرو","موتورسیکلت"].includes(a.category)){if(a.model)bits.push(a.model);if(a.year)bits.push("سال "+a.year);if(a.plate)bits.push("پلاک "+a.plate);if(a.odometer)bits.push(fa(a.odometer)+" کیلومتر");}
@@ -260,14 +348,33 @@ function activatePage(page,updateHash=true){
   link.classList.toggle("active",active);
   if(active)link.setAttribute("aria-current","page");else link.removeAttribute("aria-current");
  });
- if(updateHash){const target={dashboard:"top",services:"reminderList",history:"serviceHistoryView",assets:"otherAssets",more:"more",reports:"reports"}[valid];history.replaceState(null,"","#"+target);}
- window.scrollTo({top:0,behavior:"instant"});
+
 }
 document.querySelectorAll("[data-page-nav]").forEach(link=>link.addEventListener("click",e=>{e.preventDefault();activatePage(link.dataset.pageNav)}));
 document.querySelectorAll("[data-open-page]").forEach(button=>button.addEventListener("click",()=>activatePage(button.dataset.openPage)));
-window.addEventListener("hashchange",()=>{const target=location.hash;activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#otherAssets":"assets","#top":"dashboard","#more":"more","#reports":"reports"})[target]||"dashboard",false)});
-activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#otherAssets":"assets","#top":"dashboard","#more":"more","#reports":"reports"})[location.hash]||"dashboard",false);
-$("applyServiceFilters")?.addEventListener("click",()=>{if(validateJalaliFields($("serviceHistoryView")))renderAllServices();});
+window.addEventListener("hashchange",()=>{const target=location.hash;activatePage(({"#reminderList":"services","#otherAssets":"assets","#top":"dashboard","#more":"more","#reports":"reports"})[target]||"dashboard",false)});
+activatePage(({"#reminderList":"services","#otherAssets":"assets","#top":"dashboard","#more":"more","#reports":"reports"})[location.hash]||"dashboard",false);
+
+
+$("applyCompletedFilters")?.addEventListener("click", () => {
+  if (validateJalaliFields($("completedServiceFilters"))) {
+    renderCompletedServices();
+  }
+});
+
+$("resetCompletedFilters")?.addEventListener("click", () => {
+  $("completedAssetCategory").value = "";
+  $("completedAssetName").value = "";
+  $("completedFrom").value = "";
+  $("completedTo").value = "";
+
+  renderCompletedServices();
+});
+
+$("completedAssetCategory")?.addEventListener("change", () => {
+  renderCompletedServices();
+});
+
 $("resetServiceFilters")?.addEventListener("click",()=>{const r=previousMonthRange();$("historyFrom").value=toJalaliInput(r.from);$("historyTo").value=toJalaliInput(r.to);$("historyAssetCategory").value="";renderAllServices();});
 render();
 
