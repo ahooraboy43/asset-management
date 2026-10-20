@@ -88,11 +88,8 @@ function render(){
  }).join(""):'<div class="empty-icon">◇</div><strong>هنوز دارایی‌ای اضافه نکرده‌ای</strong><p>خودرو، خانه، وسایل یا سایر دارایی‌ها را ثبت کن؛ هر دسته در این بخش جداگانه نمایش داده می‌شود.</p>';
  renderRecentServices();renderAllServices();
  $("doneCount").textContent=`${fa(doneRem.length)} انجام‌شده`;
- const allHistory=state.services.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
- const total=allHistory.reduce((sum,s)=>sum+(Number(s.cost)||0),0);
  const reminderRows=state.reminders.filter(r=>r.status!=="cancelled").slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999")).map(r=>`<div class="schedule-row"><span class="schedule-status ${r.status==="done"?"complete":isLate(r)?"late":"pending"}"></span><div><strong>${esc(r.title)}</strong><small>${esc((state.assets.find(a=>a.id===r.assetId)||{}).name||"بدون دارایی")} · ${esc(fmtDate(r.dueDate))} · ${r.status==="done"?"انجام‌شده":isLate(r)?"عقب‌افتاده":"باز"}</small></div><button class="small-btn" data-action="history" data-id="${esc(r.id)}">سوابق</button></div>`).join("");
- const serviceRows=allHistory.map(s=>{const asset=state.assets.find(a=>a.id===s.assetId),rem=state.reminders.find(r=>r.id===s.reminderId);return `<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${esc(rem?.title||"سرویس مستقل")} · ${esc(asset?.name||"بدون دارایی")}${s.odometer?" · "+fa(s.odometer)+" کیلومتر":""}${s.part?" · "+esc(s.part):""}${s.notes?" · "+esc(s.notes):""}</p>${s.attachmentName?`<small>پیوست: ${esc(s.attachmentName)}</small>`:""}</div></article>`}).join("");
- $("scheduleList").innerHTML=`<div class="history-summary"><span>تعداد سوابق: <b>${fa(allHistory.length)}</b></span><span>جمع هزینه‌ها: <b>${fa(total)} تومان</b></span></div><div class="schedule-subhead">عملیات و یادآوری‌ها</div>${reminderRows||"<p>هنوز عملیاتی تعریف نشده است.</p>"}<div class="schedule-subhead">سرویس‌های ثبت‌شده</div>${serviceRows||"<p>هنوز سرویس ثبت‌شده‌ای وجود ندارد. می‌توانی از «ثبت سرویس مستقل» استفاده کنی.</p>" }`;
+ $("scheduleList").innerHTML=`<div class="schedule-subhead">عملیات و یادآوری‌ها</div>${reminderRows||"<p>هنوز عملیاتی تعریف نشده است.</p>"}`;
  refreshOptions();
 }
 function assetShortDescription(a){
@@ -146,8 +143,6 @@ $("addOtherAssetBtn").addEventListener("click",()=>{resetAssetForm();$("assetFor
 $("addReminderBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
 $("navAddBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
 $("editAssetBtn").addEventListener("click",()=>{const a=selectedVehicle();a?editAsset(a.id):(resetAssetForm(),open("assetDialog"))});
-$("historyBtn").addEventListener("click",()=>showHistory(null));
-$("scheduleHistoryBtn")?.addEventListener("click",()=>showHistory(null));
 $("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
 $("exportBtn").addEventListener("click",exportBackup);
 $("importBtn").addEventListener("click",()=>$("importFile").click());
@@ -162,7 +157,7 @@ $("serviceForm").addEventListener("submit",async e=>{e.preventDefault();const f=
  if(!serviceDate){toast("تاریخ انجام را شمسی و به شکل ۱۴۰۵/۰۷/۲۸ وارد کن.");return}const service={id:uid(),reminderId:id,assetId,date:serviceDate,odometer:Number(d.get("odometer"))||0,part:d.get("part").trim(),cost:Number(d.get("cost"))||0,notes:d.get("notes").trim(),attachmentName,attachmentData,createdAt:new Date().toISOString()};
  state.services.push(service);if(r){r.status="done";r.lastCompletedAt=service.date;if(r.intervalDays){const dt=new Date(service.date+"T12:00:00");dt.setDate(dt.getDate()+Number(r.intervalDays));r.dueDate=dt.toISOString().slice(0,10);r.status="open"}if(r.intervalKm&&service.odometer){r.dueOdometer=Number(service.odometer)+Number(r.intervalKm);r.status="open"}}
  if(a&&service.odometer)a.odometer=Math.max(Number(a.odometer)||0,service.odometer);
- close("serviceDialog");persist();toast("سرویس و هزینه در سوابق ثبت شد.");showHistory(id||null)});
+ close("serviceDialog");persist();toast("سرویس و هزینه در سوابق ثبت شد.");});
 document.body.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const {action,id}=b.dataset;
  if(action==="complete")completeReminder(id);if(action==="reopen"){const r=state.reminders.find(x=>x.id===id);if(r)r.status="open";persist()}
  if(action==="delete-reminder"){if(!confirm("عملیات حذف شود؟ سوابق سرویس ثبت‌شده حفظ می‌شوند."))return;state.reminders=state.reminders.filter(r=>r.id!==id);persist()}
