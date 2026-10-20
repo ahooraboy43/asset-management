@@ -84,8 +84,9 @@ function render(){
  $("assetList").className=allAssets.length?"item-list asset-category-list":"list-empty compact";
  $("assetList").innerHTML=allAssets.length?categories.map(category=>{
   const items=allAssets.filter(a=>(a.category||"سایر")===category);
-  return `<section class="asset-category-group"><div class="asset-category-title"><strong>${esc(category)}</strong><span>${fa(items.length)} دارایی</span></div>${items.map(a=>`<article class="item"><div class="item-mark">◇</div><div class="item-main"><strong>${esc(a.name)}</strong><p>${esc(a.category)}${a.model?" · "+esc(a.model):""}${a.year?" · "+esc(a.year):""}${a.plate?" · پلاک "+esc(a.plate):""}${a.odometer?" · "+fa(a.odometer)+" کیلومتر":""}${a.notes?" · "+esc(a.notes):""}</p><div class="item-actions"><button class="small-btn" data-action="edit-asset" data-id="${esc(a.id)}">ویرایش</button><button class="small-btn danger" data-action="delete-asset" data-id="${esc(a.id)}">بایگانی</button></div></div></article>`).join("")}</section>`;
+  return `<section class="asset-category-group"><div class="asset-category-title"><strong>${esc(category)}</strong><span>${fa(items.length)} دارایی</span></div>${items.map(a=>`<article class="item asset-list-item"><div class="item-mark">◇</div><div class="item-main"><strong>${esc(a.name)}</strong><p>${esc(assetShortDescription(a))}</p><div class="item-actions"><button class="small-btn" data-action="edit-asset" data-id="${esc(a.id)}">ویرایش</button><button class="small-btn danger" data-action="delete-asset" data-id="${esc(a.id)}">بایگانی</button></div></div></article>`).join("")}</section>`;
  }).join(""):'<div class="empty-icon">◇</div><strong>هنوز دارایی‌ای اضافه نکرده‌ای</strong><p>خودرو، خانه، وسایل یا سایر دارایی‌ها را ثبت کن؛ هر دسته در این بخش جداگانه نمایش داده می‌شود.</p>';
+ renderRecentServices();renderAllServices();
  $("doneCount").textContent=`${fa(doneRem.length)} انجام‌شده`;
  const allHistory=state.services.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
  const total=allHistory.reduce((sum,s)=>sum+(Number(s.cost)||0),0);
@@ -93,6 +94,33 @@ function render(){
  const serviceRows=allHistory.map(s=>{const asset=state.assets.find(a=>a.id===s.assetId),rem=state.reminders.find(r=>r.id===s.reminderId);return `<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${esc(rem?.title||"سرویس مستقل")} · ${esc(asset?.name||"بدون دارایی")}${s.odometer?" · "+fa(s.odometer)+" کیلومتر":""}${s.part?" · "+esc(s.part):""}${s.notes?" · "+esc(s.notes):""}</p>${s.attachmentName?`<small>پیوست: ${esc(s.attachmentName)}</small>`:""}</div></article>`}).join("");
  $("scheduleList").innerHTML=`<div class="history-summary"><span>تعداد سوابق: <b>${fa(allHistory.length)}</b></span><span>جمع هزینه‌ها: <b>${fa(total)} تومان</b></span></div><div class="schedule-subhead">عملیات و یادآوری‌ها</div>${reminderRows||"<p>هنوز عملیاتی تعریف نشده است.</p>"}<div class="schedule-subhead">سرویس‌های ثبت‌شده</div>${serviceRows||"<p>هنوز سرویس ثبت‌شده‌ای وجود ندارد. می‌توانی از «ثبت سرویس مستقل» استفاده کنی.</p>" }`;
  refreshOptions();
+}
+function assetShortDescription(a){
+ const bits=[];
+ if(a.category==="خودرو"){if(a.model)bits.push(a.model);if(a.year)bits.push("سال "+a.year);if(a.plate)bits.push("پلاک "+a.plate);if(a.odometer)bits.push(fa(a.odometer)+" کیلومتر");}
+ else {for(const [key,label,type] of (CATEGORY_FIELDS[a.category]||[])){const value=getPath(a,key);if(value===undefined||value===null||String(value).trim()==="")continue;bits.push(label+" "+(type==="date"?fmtDate(value):String(value)));}}
+ if(a.notes)bits.push(a.notes);return bits.slice(0,4).join(" · ")||"بدون توضیحات تکمیلی";
+}
+function sortedServices(){return state.services.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||""))}
+function serviceRowHtml(s){
+ const asset=state.assets.find(a=>a.id===s.assetId),rem=state.reminders.find(r=>r.id===s.reminderId);
+ const details=[rem?.title||"سرویس مستقل",asset?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" کیلومتر":"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
+ return `<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${details}</p>${s.attachmentName?`<small>پیوست: ${esc(s.attachmentName)}</small>`:""}</div></article>`;
+}
+function renderRecentServices(){const target=$("recentServicesList");if(!target)return;const items=sortedServices().slice(0,5);target.innerHTML=items.length?items.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>هنوز سرویسی ثبت نشده</strong><p>با ثبت سرویس، پنج مورد آخر به‌صورت خودکار در این قسمت نمایش داده می‌شوند.</p></div>';}
+function previousMonthRange(){
+ const now=new Date(today()+"T00:00:00Z"),start=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-1,1)),end=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),0));
+ const iso=d=>d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");return {from:iso(start),to:iso(end)};
+}
+function setupServiceHistoryFilters(){const from=$("historyFrom"),to=$("historyTo");if(!from||!to)return;if(!from.value&&!to.value){const range=previousMonthRange();from.value=toJalaliInput(range.from);to.value=toJalaliInput(range.to);}}
+function renderAllServices(){
+ const list=$("allServicesList"),summary=$("allServicesSummary"),sel=$("historyAssetCategory");if(!list||!summary||!sel)return;
+ const old=sel.value,categories=[...new Set(state.assets.map(a=>a.category||"سایر"))].sort((a,b)=>a.localeCompare(b,"fa"));
+ sel.innerHTML='<option value="">همه دسته‌ها</option>'+categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");if(categories.includes(old))sel.value=old;
+ const fr=$("historyFrom").value.trim(),tr=$("historyTo").value.trim(),from=fr?toISODate(fr):"",to=tr?toISODate(tr):"",category=sel.value;
+ const items=sortedServices().filter(s=>{if(fr&&!from)return false;if(tr&&!to)return false;if(from&&(!s.date||s.date<from))return false;if(to&&(!s.date||s.date>to))return false;if(category){const a=state.assets.find(x=>x.id===s.assetId);if((a?.category||"بدون دسته")!==category)return false;}return true;});
+ const total=items.reduce((sum,s)=>sum+(Number(s.cost)||0),0);summary.innerHTML=`<span>تعداد: <b>${fa(items.length)}</b></span><span>جمع هزینه: <b>${fa(total)} تومان</b></span>`;
+ list.innerHTML=items.length?items.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>سابقه‌ای مطابق فیلترها پیدا نشد</strong><p>بازه تاریخ یا نوع دارایی را تغییر بده.</p></div>';
 }
 function resetAssetForm(){editingAssetId=null;const f=$("assetForm");f.reset();f.elements.category.value="خودرو";renderCategoryFields("خودرو",{});$("assetDialogTitle").textContent="افزودن دارایی"}
 function editAsset(id){const a=state.assets.find(x=>x.id===id);if(!a)return;editingAssetId=id;const f=$("assetForm");f.elements.name.value=a.name||"";f.elements.category.value=a.category||"خودرو";f.elements.notes.value=a.notes||"";renderCategoryFields(a.category||"خودرو",{...a,details:a.details||{}});$("assetDialogTitle").textContent="ویرایش دارایی";open("assetDialog")}
@@ -193,4 +221,7 @@ document.addEventListener("click",e=>{
 window.addEventListener("resize",()=>{if(activeCalendarInput)drawJalaliCalendar()});
 window.addEventListener("scroll",()=>{if(activeCalendarInput)drawJalaliCalendar()},{passive:true});
 
+setupServiceHistoryFilters();
+$("applyServiceFilters")?.addEventListener("click",()=>{if(validateJalaliFields($("serviceHistoryView")))renderAllServices();});
+$("resetServiceFilters")?.addEventListener("click",()=>{const r=previousMonthRange();$("historyFrom").value=toJalaliInput(r.from);$("historyTo").value=toJalaliInput(r.to);$("historyAssetCategory").value="";renderAllServices();});
 render();
