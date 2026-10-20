@@ -1,6 +1,8 @@
 /* Hamrah Man v3 - local-first prototype */
 const STORE_KEY="hamrah-man-v1", STORE_KEY_V2="hamrah-man-v3";
 const $=id=>document.getElementById(id);
+// Attach dialog close controls immediately so an unrelated render error cannot disable them.
+document.addEventListener("click",e=>{const b=e.target.closest("[data-close]");if(!b)return;const d=$(b.dataset.close);if(d?.open){e.preventDefault();e.stopPropagation();d.close()}},true);
 let installPrompt=null, editingAssetId=null;
 function uid(){return (crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2))}
 function loadState(){
@@ -25,6 +27,8 @@ function normalize(v){
  const assets=(v.assets||[]).map(a=>({...a,id:a.id||uid(),category:a.category||"خودرو",model:a.model||"",year:a.year||"",plate:a.plate||"",vin:a.vin||"",odometer:Number(a.odometer)||0,notes:a.notes||"",details:a.details||{},status:a.status||"active"}));
  const reminders=(v.reminders||[]).map(r=>({...r,id:r.id||uid(),assetId:r.assetId||"",status:r.status||"open",triggerType:r.triggerType||"date",dueOdometer:r.dueOdometer||"",intervalDays:r.intervalDays||"",intervalKm:r.intervalKm||"",intervalValue:r.intervalValue||"",intervalUnit:r.intervalUnit||"days",dependsOn:r.dependsOn||"",history:Array.isArray(r.history)?r.history:[]}));
  const services=Array.isArray(v.services)?v.services.map(s=>({...s,id:s.id||uid(),reminderId:s.reminderId||"",assetId:s.assetId||"",cost:Number(s.cost)||0,odometer:Number(s.odometer)||0,part:s.part||"",notes:s.notes||""})):[];
+// Recover the asset link from its reminder when older service records omitted assetId.
+services.forEach(s=>{if(!s.assetId&&s.reminderId){const r=reminders.find(x=>x.id===s.reminderId);if(r?.assetId)s.assetId=r.assetId;}});
  // Older versions stored completed service records inside each reminder.history array.
  // Import those into the unified service ledger without deleting or overwriting the original history.
  reminders.forEach(r=>(r.history||[]).forEach((h,i)=>{
@@ -62,7 +66,7 @@ function setPath(obj,path,value){const keys=path.split(".");let cur=obj;keys.sli
 function renderCategoryFields(category,values={}){const box=$("categoryFields");if(!box)return;box.innerHTML=(CATEGORY_FIELDS[category]||CATEGORY_FIELDS["خودرو"]).map(([key,label,type,placeholder])=>{const value=getPath(values,key)??"";const date=type==="date";let input;if(type==="select"){input=`<select name="${esc(key)}">${placeholder.split("|").map(o=>`<option ${value===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`}else input=`<input name="${esc(key)}" type="${date?"text":type}" ${date?'class="jalali-date" inputmode="numeric" placeholder="۱۴۰۵/۰۷/۲۸"':`placeholder="${esc(placeholder)}"`} ${type==="number"?'min="0"':''} value="${esc(date?toJalaliInput(value):value)}" autocomplete="off">`;return `<label>${esc(label)}${input}</label>`}).join("");installJalaliCalendars();}
 function readCategoryDetails(form,category){const out={};for(const [key,label,type] of (CATEGORY_FIELDS[category]||[])){const el=form.elements.namedItem(key);if(!el)continue;let val=el.value.trim();if(type==="date"&&val){val=toISODate(val);if(!val){el.setCustomValidity("تاریخ را به شکل شمسی ۱۴۰۵/۰۷/۲۸ وارد کن.");el.reportValidity();el.setCustomValidity("");return null}}setPath(out,key,val)}return out}
 function validateJalaliFields(form){for(const el of form.querySelectorAll(".jalali-date")){if(!el.value.trim()){if(el.required){el.setCustomValidity("تاریخ شمسی را وارد کن.");el.reportValidity();el.setCustomValidity("");return false}continue}if(!toISODate(el.value)){el.setCustomValidity("تاریخ را به شکل شمسی ۱۴۰۵/۰۷/۲۸ وارد کن.");el.reportValidity();el.setCustomValidity("");return false}}return true}
-function selectedVehicle(){return state.assets.find(a=>a.id===state.selectedAssetId&&a.category==="خودرو")||state.assets.find(a=>a.category==="خودرو")||null}
+function selectedVehicle(){return state.assets.find(a=>a.id===state.selectedAssetId&&a.status!=="archived")||state.assets.find(a=>a.status!=="archived")||null}
 function isLate(r){const a=state.assets.find(x=>x.id===r.assetId);return r.status==="open"&&((r.dueDate&&r.dueDate<today())||(Number(r.dueOdometer)>0&&a&&Number(a.odometer)>=Number(r.dueOdometer)))}
 function dueSoon(r){const a=state.assets.find(x=>x.id===r.assetId), days=r.dueDate?Math.ceil((new Date(r.dueDate+"T12:00:00")-new Date(today()+"T12:00:00"))/86400000):9999;
  return r.status==="open"&&((r.dueDate&&days>=0&&days<=7)||(Number(r.dueOdometer)>0&&a&&Number(r.dueOdometer)-Number(a.odometer)<=500&&Number(r.dueOdometer)>=Number(a.odometer)))}
@@ -117,7 +121,7 @@ function assetShortDescription(a){
 }
 function sortedServices(){return state.services.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||""))}
 function serviceRowHtml(s){
- const asset=state.assets.find(a=>a.id===s.assetId),rem=state.reminders.find(r=>r.id===s.reminderId);
+ const rem=state.reminders.find(r=>r.id===s.reminderId),asset=state.assets.find(a=>a.id===s.assetId)||state.assets.find(a=>a.id===rem?.assetId);
  const details=[rem?.title||"سرویس مستقل",asset?.name||"بدون دارایی مشخص",s.odometer?fa(s.odometer)+" کیلومتر":"",s.part||"",s.notes||""].filter(Boolean).map(esc).join(" · ");
  return `<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${details}</p>${s.attachmentName?`<small>پیوست: ${esc(s.attachmentName)}</small>`:""}</div></article>`;
 }
@@ -132,7 +136,7 @@ function renderAllServices(){
  const old=sel.value,categories=[...new Set(state.assets.map(a=>a.category||"سایر"))].sort((a,b)=>a.localeCompare(b,"fa"));
  sel.innerHTML='<option value="">همه دسته‌ها</option>'+categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");if(categories.includes(old))sel.value=old;
  const fr=$("historyFrom").value.trim(),tr=$("historyTo").value.trim(),from=fr?toISODate(fr):"",to=tr?toISODate(tr):"",category=sel.value;
- const items=sortedServices().filter(s=>{if(fr&&!from)return false;if(tr&&!to)return false;if(from&&(!s.date||s.date<from))return false;if(to&&(!s.date||s.date>to))return false;if(category){const a=state.assets.find(x=>x.id===s.assetId);if((a?.category||"بدون دسته")!==category)return false;}return true;});
+ const items=sortedServices().filter(s=>{if(fr&&!from)return false;if(tr&&!to)return false;if(from&&(!s.date||s.date<from))return false;if(to&&(!s.date||s.date>to))return false;if(category){const r=state.reminders.find(x=>x.id===s.reminderId),a=state.assets.find(x=>x.id===s.assetId)||state.assets.find(x=>x.id===r?.assetId);if((a?.category||"بدون دسته")!==category)return false;}return true;});
  const total=items.reduce((sum,s)=>sum+(Number(s.cost)||0),0);summary.innerHTML=`<span>تعداد: <b>${fa(items.length)}</b></span><span>جمع هزینه: <b>${fa(total)} تومان</b></span>`;
  list.innerHTML=items.length?items.map(serviceRowHtml).join(""):'<div class="list-empty compact"><strong>سابقه‌ای مطابق فیلترها پیدا نشد</strong><p>بازه تاریخ یا نوع دارایی را تغییر بده.</p></div>';
 }
@@ -246,7 +250,7 @@ setupServiceHistoryFilters();
 function activatePage(page,updateHash=true){
  const pageMeta={dashboard:["خانه","خلاصه وضعیت و آخرین فعالیت‌ها"],assets:["دارایی‌ها","مدیریت دسته‌بندی‌شده دارایی‌ها"],services:["سرویس‌ها","برنامه نگهداری و یادآوری‌ها"],history:["سوابق","جست‌وجوی سرویس‌های انجام‌شده"],more:["بیشتر","گزارش‌ها و ابزارهای برنامه"],reports:["گزارش‌ها","خلاصه هزینه‌ها"]};
  const valid=["dashboard","services","history","assets","more","reports"].includes(page)?page:"dashboard";
- document.querySelectorAll("[data-page]").forEach(el=>el.classList.toggle("page-hidden",el.dataset.page!==valid));
+ document.querySelectorAll("[data-page]").forEach(el=>{const hide=el.dataset.page!==valid;el.hidden=hide;el.classList.toggle("page-hidden",hide)});
  const meta=pageMeta[valid]||pageMeta.dashboard;if($("pageTitle"))$("pageTitle").textContent=meta[0];if($("pageEyebrow"))$("pageEyebrow").textContent=meta[1];
  if(valid==="reports")renderReports();
  document.querySelectorAll("[data-page-nav]").forEach(link=>{
