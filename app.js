@@ -6,7 +6,16 @@ function uid(){return (crypto.randomUUID?crypto.randomUUID():String(Date.now())+
 function loadState(){
  try{
   const current=JSON.parse(localStorage.getItem(STORE_KEY_V2)||"null");
-  if(current&&Array.isArray(current.assets)) return normalize(current);
+  if(current&&Array.isArray(current.assets)){
+   const normalized=normalize(current);
+   // Recover legacy records without replacing current data.
+   const old=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+   const oldState=normalize({assets:Array.isArray(old.assets)?old.assets:[],reminders:Array.isArray(old.reminders)?old.reminders:[],services:Array.isArray(old.services)?old.services:[]});
+   oldState.assets.forEach(a=>{if(!normalized.assets.some(x=>x.id===a.id||x.name===a.name&&x.category===a.category))normalized.assets.push(a)});
+   oldState.reminders.forEach(r=>{if(!normalized.reminders.some(x=>x.id===r.id||x.title===r.title&&x.assetId===r.assetId))normalized.reminders.push(r)});
+   oldState.services.forEach(s=>{if(!normalized.services.some(x=>x.id===s.id||x.date===s.date&&x.cost===s.cost&&x.assetId===s.assetId&&x.reminderId===s.reminderId&&x.part===s.part))normalized.services.push(s)});
+   return normalized;
+  }
   const old=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
   const migrated=normalize({assets:Array.isArray(old.assets)?old.assets:[],reminders:Array.isArray(old.reminders)?old.reminders:[],services:[]});
   localStorage.setItem(STORE_KEY_V2,JSON.stringify(migrated)); return migrated;
@@ -21,7 +30,7 @@ function normalize(v){
  reminders.forEach(r=>(r.history||[]).forEach((h,i)=>{
   if(!h||typeof h!=="object")return;
   const rawDate=h.date||h.serviceDate||h.completedAt||h.performedAt||h.createdAt||"";
-  const date=typeof rawDate==="string"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(rawDate)?rawDate:(rawDate?toISODate(rawDate):"");
+  const date=typeof rawDate==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(rawDate)?rawDate:(rawDate?toISODate(rawDate):"");
   const legacy={id:"legacy-"+r.id+"-"+i,reminderId:r.id,assetId:h.assetId||r.assetId||"",date,odometer:Number(h.odometer??h.kilometers??h.km)||0,part:h.part||h.item||h.product||"",cost:Number(h.cost??h.amount??h.price)||0,notes:h.notes||h.note||"",attachmentName:h.attachmentName||"",attachmentData:h.attachmentData||"",createdAt:h.createdAt||""};
   const duplicate=services.some(s=>s.reminderId===legacy.reminderId&&(s.id===legacy.id||(s.date===legacy.date&&Number(s.cost||0)===legacy.cost&&Number(s.odometer||0)===legacy.odometer&&(s.part||"")===legacy.part)));
   if(!duplicate&&(legacy.date||legacy.cost||legacy.odometer||legacy.part||legacy.notes))services.push(legacy);
@@ -66,7 +75,7 @@ function refreshOptions(){
 }
 function render(){
  const vehicle=selectedVehicle(), openRem=state.reminders.filter(r=>r.status==="open"), doneRem=state.reminders.filter(r=>r.status==="done");
- $("assetCount").textContent=`${fa(state.assets.length)} دارایی ثبت‌شده`;
+ if($("assetCount")) $("assetCount").textContent=`${fa(state.assets.length)} دارایی ثبت‌شده`;
  $("heroAssetName").innerHTML=vehicle?`${esc(vehicle.name)} <span>${esc([vehicle.model,vehicle.year].filter(Boolean).join(" · ")||"خودرو")}</span>`:"خودروی من <span>خودرویی ثبت نشده</span>";
  $("heroOdometer").textContent=vehicle&&vehicle.odometer?fa(vehicle.odometer):"—";
  $("assetIdentity").textContent=vehicle?[vehicle.plate?"پلاک "+vehicle.plate:"بدون پلاک",vehicle.vin?"شاسی "+vehicle.vin:""].filter(Boolean).join(" · ")||"مشخصات ثبت نشده":"خودرویی ثبت نشده";
@@ -217,6 +226,21 @@ window.addEventListener("resize",()=>{if(activeCalendarInput)drawJalaliCalendar(
 window.addEventListener("scroll",()=>{if(activeCalendarInput)drawJalaliCalendar()},{passive:true});
 
 setupServiceHistoryFilters();
+// Bottom navigation switches distinct views instead of scrolling through one long page.
+function activatePage(page,updateHash=true){
+ const valid=["dashboard","services","history","assets"].includes(page)?page:"dashboard";
+ document.querySelectorAll("[data-page]").forEach(el=>el.classList.toggle("page-hidden",el.dataset.page!==valid));
+ document.querySelectorAll("[data-page-nav]").forEach(link=>{
+  const active=link.dataset.pageNav===valid;
+  link.classList.toggle("active",active);
+  if(active)link.setAttribute("aria-current","page");else link.removeAttribute("aria-current");
+ });
+ if(updateHash){const target={dashboard:"top",services:"reminderList",history:"serviceHistoryView",assets:"otherAssets"}[valid];history.replaceState(null,"","#"+target);}
+ window.scrollTo({top:0,behavior:"instant"});
+}
+document.querySelectorAll("[data-page-nav]").forEach(link=>link.addEventListener("click",e=>{e.preventDefault();activatePage(link.dataset.pageNav)}));
+window.addEventListener("hashchange",()=>{const target=location.hash;activatePage(target==="#reminderList"?"services":target==="#serviceHistoryView"?"history":target==="#otherAssets"?"assets":"dashboard",false)});
+activatePage(({"#reminderList":"services","#serviceHistoryView":"history","#otherAssets":"assets","#top":"dashboard"})[location.hash]||"dashboard",false);
 $("applyServiceFilters")?.addEventListener("click",()=>{if(validateJalaliFields($("serviceHistoryView")))renderAllServices();});
 $("resetServiceFilters")?.addEventListener("click",()=>{const r=previousMonthRange();$("historyFrom").value=toJalaliInput(r.from);$("historyTo").value=toJalaliInput(r.to);$("historyAssetCategory").value="";renderAllServices();});
 render();
