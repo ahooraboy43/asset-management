@@ -13,7 +13,20 @@ function loadState(){
  }catch{return {version:3,assets:[],reminders:[],services:[]}}
 }
 function normalize(v){
- return {version:3,assets:(v.assets||[]).map(a=>({...a,id:a.id||uid(),category:a.category||"خودرو",model:a.model||"",year:a.year||"",plate:a.plate||"",vin:a.vin||"",odometer:Number(a.odometer)||0,notes:a.notes||"",details:a.details||{},status:a.status||"active"})),reminders:(v.reminders||[]).map(r=>({...r,id:r.id||uid(),assetId:r.assetId||"",status:r.status||"open",triggerType:r.triggerType||"date",dueOdometer:r.dueOdometer||"",intervalDays:r.intervalDays||"",intervalKm:r.intervalKm||"",dependsOn:r.dependsOn||"",history:Array.isArray(r.history)?r.history:[]})),services:Array.isArray(v.services)?v.services:[]}
+ const assets=(v.assets||[]).map(a=>({...a,id:a.id||uid(),category:a.category||"خودرو",model:a.model||"",year:a.year||"",plate:a.plate||"",vin:a.vin||"",odometer:Number(a.odometer)||0,notes:a.notes||"",details:a.details||{},status:a.status||"active"}));
+ const reminders=(v.reminders||[]).map(r=>({...r,id:r.id||uid(),assetId:r.assetId||"",status:r.status||"open",triggerType:r.triggerType||"date",dueOdometer:r.dueOdometer||"",intervalDays:r.intervalDays||"",intervalKm:r.intervalKm||"",dependsOn:r.dependsOn||"",history:Array.isArray(r.history)?r.history:[]}));
+ const services=Array.isArray(v.services)?v.services.map(s=>({...s,id:s.id||uid(),reminderId:s.reminderId||"",assetId:s.assetId||"",cost:Number(s.cost)||0,odometer:Number(s.odometer)||0,part:s.part||"",notes:s.notes||""})):[];
+ // Older versions stored completed service records inside each reminder.history array.
+ // Import those into the unified service ledger without deleting or overwriting the original history.
+ reminders.forEach(r=>(r.history||[]).forEach((h,i)=>{
+  if(!h||typeof h!=="object")return;
+  const rawDate=h.date||h.serviceDate||h.completedAt||h.performedAt||h.createdAt||"";
+  const date=typeof rawDate==="string"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(rawDate)?rawDate:(rawDate?toISODate(rawDate):"");
+  const legacy={id:"legacy-"+r.id+"-"+i,reminderId:r.id,assetId:h.assetId||r.assetId||"",date,odometer:Number(h.odometer??h.kilometers??h.km)||0,part:h.part||h.item||h.product||"",cost:Number(h.cost??h.amount??h.price)||0,notes:h.notes||h.note||"",attachmentName:h.attachmentName||"",attachmentData:h.attachmentData||"",createdAt:h.createdAt||""};
+  const duplicate=services.some(s=>s.reminderId===legacy.reminderId&&(s.id===legacy.id||(s.date===legacy.date&&Number(s.cost||0)===legacy.cost&&Number(s.odometer||0)===legacy.odometer&&(s.part||"")===legacy.part)));
+  if(!duplicate&&(legacy.date||legacy.cost||legacy.odometer||legacy.part||legacy.notes))services.push(legacy);
+ }));
+ return {version:3,assets,reminders,services};
 }
 let state=loadState();
 function persist(){try{localStorage.setItem(STORE_KEY_V2,JSON.stringify(state));render()}catch(e){showToast("فضای ذخیره‌سازی دستگاه کافی نیست؛ از اطلاعات پشتیبان بگیر.")}}
