@@ -119,6 +119,7 @@ $("addReminderBtn").addEventListener("click",()=>{ $("reminderForm").reset();del
 $("navAddBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
 $("editAssetBtn").addEventListener("click",()=>{const a=selectedVehicle();a?editAsset(a.id):(resetAssetForm(),open("assetDialog"))});
 $("historyBtn").addEventListener("click",()=>showHistory(null));
+$("scheduleHistoryBtn")?.addEventListener("click",()=>showHistory(null));
 $("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
 $("exportBtn").addEventListener("click",exportBackup);
 $("importBtn").addEventListener("click",()=>$("importFile").click());
