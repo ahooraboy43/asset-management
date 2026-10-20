@@ -157,11 +157,13 @@ function showHistory(id){
 $("addAssetBtn").addEventListener("click",()=>{resetAssetForm();open("assetDialog")});
 $("addOtherAssetBtn").addEventListener("click",()=>{resetAssetForm();$("assetForm").elements.category.value="وسایل";open("assetDialog")});
 $("addReminderBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
-$("navAddBtn").addEventListener("click",()=>{showQuickAddMenu()});
-function showQuickAddMenu(){
- const choice=prompt("چه چیزی ثبت کنیم؟\\n1 - دارایی جدید\\n2 - تعریف سرویس یا یادآوری\\n3 - ثبت سرویس انجام‌شده","3");
- if(choice==="1"){resetAssetForm();open("assetDialog")}else if(choice==="2"){$("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")}else if(choice==="3")openServiceForm("");
-}
+$("navAddBtn").addEventListener("click",()=>open("quickAddDialog"));
+document.querySelectorAll("[data-quick-action]").forEach(button=>button.addEventListener("click",()=>{
+ const action=button.dataset.quickAction;close("quickAddDialog");
+ if(action==="asset"){resetAssetForm();open("assetDialog")}
+ else if(action==="reminder"){$("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")}
+ else if(action==="service")openServiceForm("");
+}));
 $("editAssetBtn").addEventListener("click",()=>{const a=selectedVehicle();a?editAsset(a.id):(resetAssetForm(),open("assetDialog"))});
 $("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
 $("exportBtn").addEventListener("click",exportBackup);
