@@ -124,3 +124,6 @@ body{background:radial-gradient(ellipse at 50% 0,#253448 0,#18212d 44%,#131922 1
 .repeat-rule{display:grid;grid-template-columns:1fr 1fr;gap:10px}.repeat-rule label{min-width:0}.repeat-rule input,.repeat-rule select{width:100%}.generic-asset-art.hidden{display:none!important}
 
 .vehicle-art.generic-mode svg{display:none}.generic-asset-art{font-size:96px;line-height:1;filter:drop-shadow(0 14px 10px #0005);width:100%;height:100%;align-items:center;justify-content:center}.generic-asset-art:not(.hidden){display:flex}.asset-carousel-controls{user-select:none}
+
+/* Hotfix: make separate page visibility authoritative even if other display rules exist. */
+[data-page][hidden], .page-hidden { display: none !important; }
