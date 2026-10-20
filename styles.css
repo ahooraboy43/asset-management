@@ -60,3 +60,53 @@ dialog{max-height:88dvh;overflow:auto}dialog form{padding-bottom:2px}input[type=
 
 /* Separate page views for bottom navigation. */
 .page-hidden{display:none!important}
+
+
+/* Redesign: consistent page hierarchy, spacious cards, readable typography */
+:root{--bg:#151b25;--surface:#202a38;--surface2:#263447;--text:#edf3fa;--muted:#9baec2;--line:rgba(201,220,240,.12);--cyan:#70d6c4;--orange:#ff9b76;--shadow:0 14px 38px rgba(0,0,0,.18)}
+body{background:radial-gradient(ellipse at 50% 0,#253448 0,#18212d 44%,#131922 100%);padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.topbar{max-width:900px;padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:18px}
+.topbar h1{font-size:23px;letter-spacing:-.02em}
+.container{max-width:900px;padding:0 16px}
+.app-page{animation:pageFade .16s ease-out}
+@keyframes pageFade{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.section-head{margin:26px 2px 13px;align-items:flex-end}
+.section-head h2,.page-intro h2{font-size:20px;letter-spacing:-.02em}
+.eyebrow{font-size:11px;color:#9db2c8}
+.panel,.asset-hero,.service-card{border-radius:22px}
+.panel{padding:16px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border-color:var(--line)}
+.asset-hero{background:linear-gradient(145deg,#29394b,#202a38 75%);border-color:var(--line)}
+.identity-panel{background:rgba(8,14,22,.22);border-color:var(--line)}
+.bottom-nav{max-width:900px;background:rgba(22,30,42,.94);border-color:var(--line);padding-top:11px;backdrop-filter:blur(24px)}
+.bottom-nav a{font-size:10px;min-width:52px;gap:5px;color:#a8b7c8}
+.bottom-nav a span{font-size:22px}
+.bottom-nav a.active{color:var(--cyan)}
+.nav-add{width:48px;height:48px;background:var(--cyan);box-shadow:0 7px 22px #70d6c433}
+.button-primary{background:var(--cyan);color:#102a2b}
+.text-action{font-weight:600}
+.asset-category-list{gap:22px}
+.asset-category-title{background:rgba(112,214,196,.07);border-color:rgba(112,214,196,.15);padding:14px 16px}
+.asset-category-title strong{font-size:15px}
+.asset-category-group>.item{background:rgba(255,255,255,.025);padding:15px;border-radius:16px}
+.item-main strong{font-size:13px}
+.item-main p{font-size:11px;line-height:1.9}
+.page-intro{padding:12px 3px 6px}
+.page-intro h2{margin:0 0 7px}
+.page-intro p:not(.eyebrow){font-size:12px;color:var(--muted);line-height:1.9;margin:0}
+.shortcut-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.shortcut-card{display:flex;flex-direction:column;align-items:flex-start;gap:9px;text-align:right;min-height:140px;padding:17px;border:1px solid var(--line);border-radius:19px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.02));color:var(--text);font:inherit;cursor:pointer}
+.shortcut-card>span{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:rgba(112,214,196,.12);color:var(--cyan);font-size:22px}
+.shortcut-card strong{font-size:13px}
+.shortcut-card small{font-size:11px;line-height:1.7;color:var(--muted)}
+.report-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.report-stat{padding:18px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,rgba(112,214,196,.09),rgba(255,255,255,.025))}
+.report-stat span,.report-stat small{display:block;color:var(--muted);font-size:11px}
+.report-stat strong{display:block;font-size:clamp(16px,4vw,22px);margin:10px 0;overflow-wrap:anywhere}
+.reports-page h3{font-size:15px;margin:2px 0 14px}
+.report-breakdown{display:grid;gap:0}
+.report-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:12px}
+.report-row:last-child{border-bottom:0}
+.report-row strong{font-size:12px;white-space:nowrap}
+.page-back{margin-top:16px}
+.history-filters{padding:14px;border-radius:18px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+@media(max-width:420px){.container{padding:0 12px}.shortcut-card{padding:13px;min-height:128px}.report-summary{gap:8px}.report-stat{padding:13px}.bottom-nav a{min-width:46px}.section-head h2,.page-intro h2{font-size:18px}}
