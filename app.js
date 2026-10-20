@@ -171,7 +171,7 @@ document.querySelectorAll("[data-quick-action]").forEach(button=>button.addEvent
 }));
 $("editAssetBtn").addEventListener("click",()=>{const a=selectedVehicle();a?editAsset(a.id):(resetAssetForm(),open("assetDialog"))});
 $("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
-$("exportBtn").addEventListener("click",exportBackup);
+$("exportBtn")?.addEventListener("click",exportBackup);
 $("moreBackupBtn")?.addEventListener("click",exportBackup);
 $("moreRestoreBtn")?.addEventListener("click",()=>$("importFile").click());
 $("importBtn")?.addEventListener("click",()=>$("importFile").click());
