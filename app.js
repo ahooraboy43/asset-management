@@ -91,7 +91,7 @@ function render(){
  const relevant=state.reminders.filter(r=>r.status!=="cancelled");
  $("reminderList").innerHTML=relevant.length?relevant.map(r=>{
   const a=state.assets.find(x=>x.id===r.assetId),late=isLate(r),soon=dueSoon(r),done=r.status==="done";
-  const duebits=[];if(r.dueDate)duebits.push(fmtDate(r.dueDate));if(r.dueOdometer)duebits.push(fa(r.dueOdometer)+" کیلومتر");
+  const duebits=[];if(r.dueDate)duebits.push(fmtDate(r.dueDate));if(r.dueOdometer)duebits.push(fa(r.dueOdometer)+" "+metricInfo(a).unit);
   const dependency=r.dependsOn&&state.reminders.find(x=>x.id===r.dependsOn);
   return `<article class="service-card"><div class="service-title"><span class="service-icon ${late?"warn":""}">${done?"✓":late?"!":"◷"}</span><strong>${esc(r.title)}</strong><button class="small-btn" data-action="history" data-id="${esc(r.id)}">جزئیات</button></div><div class="service-meta"><span>◷</span>${esc(duebits.join(" · ")||"سررسید تعیین نشده")}</div><div class="service-meta"><span>◇</span>${esc(a?a.name:"بدون دارایی")}</div>${dependency?`<div class="service-meta"><span>↳</span>وابسته به: ${esc(dependency.title)}</div>`:""}<div class="gauge ${late?"orange":"blue"}"><span>${done?"انجام‌شده":late?"عقب‌افتاده":soon?"نزدیک":"باز"}</span></div><div class="item-actions"><button class="small-btn" data-action="${done?"reopen":"complete"}" data-id="${esc(r.id)}">${done?"بازگشایی":"ثبت سرویس"}</button><button class="small-btn" data-action="edit-reminder" data-id="${esc(r.id)}">ویرایش</button><button class="small-btn danger" data-action="delete-reminder" data-id="${esc(r.id)}">حذف</button></div></article>`
  }).join(""):'<article class="service-card sample"><div class="service-title"><span class="service-icon">◇</span><strong>هنوز سرویسی ثبت نشده</strong></div><div class="service-meta">اولین عملیات نگهداری را اضافه کن.</div><button class="small-btn" data-action="new-reminder">＋ تعریف عملیات</button></article>';
@@ -336,3 +336,5 @@ function isLate(r){const a=state.assets.find(x=>x.id===r.assetId),m=dashboardMet
 function dueSoon(r){const a=state.assets.find(x=>x.id===r.assetId),m=dashboardMetric(a),days=r.dueDate?Math.ceil((new Date(r.dueDate+"T12:00:00")-new Date(today()+"T12:00:00"))/86400000):9999;return r.status==="open"&&((r.dueDate&&days>=0&&days<=7)||((r.triggerType==="odometer"||r.triggerType==="both")&&Number(r.dueOdometer)>0&&Number(r.dueOdometer)-m.value<=500&&Number(r.dueOdometer)>=m.value))}
 
 render();
+
+let carouselTouchStartX=0;document.querySelector(".asset-hero")?.addEventListener("touchstart",e=>{carouselTouchStartX=e.changedTouches?.[0]?.clientX||0},{passive:true});document.querySelector(".asset-hero")?.addEventListener("touchend",e=>{const end=e.changedTouches?.[0]?.clientX||0,delta=end-carouselTouchStartX;if(Math.abs(delta)>45)moveDashboardAsset(delta<0?1:-1)},{passive:true});
