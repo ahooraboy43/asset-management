@@ -57,3 +57,6 @@ dialog{max-height:88dvh;overflow:auto}dialog form{padding-bottom:2px}input[type=
 .history-filter-actions{display:flex;align-items:end;gap:8px;grid-column:1/-1;flex-wrap:wrap}.history-filter-actions .button{min-height:40px}
 #allServicesSummary{margin:8px 0 14px}.asset-list-item .item-main>p{line-height:1.8;overflow-wrap:anywhere}
 @media(max-width:680px){.history-filters{grid-template-columns:1fr 1fr}.history-filters label:first-child{grid-column:1/-1}.history-filter-actions{grid-column:1/-1}.recent-services-panel{padding:10px}}
+
+/* Separate page views for bottom navigation. */
+.page-hidden{display:none!important}
