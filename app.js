@@ -157,6 +157,7 @@ function drawJalaliCalendar(){
 }
 function openJalaliCalendar(input){
  installJalaliCalendars();activeCalendarInput=input;
+ const panel=$("jalaliCalendar"),owner=input.closest("dialog");(owner||document.body).appendChild(panel);
  const iso=toISODate(input.value)||today(),parts=jalaliParts(new Date(iso+"T12:00:00Z"));
  calendarYear=parts.year;calendarMonth=parts.month;drawJalaliCalendar();
 }
