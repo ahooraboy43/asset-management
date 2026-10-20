@@ -44,12 +44,12 @@ function isLate(r){const a=state.assets.find(x=>x.id===r.assetId);return r.statu
 function dueSoon(r){const a=state.assets.find(x=>x.id===r.assetId), days=r.dueDate?Math.ceil((new Date(r.dueDate+"T12:00:00")-new Date(today()+"T12:00:00"))/86400000):9999;
  return r.status==="open"&&((r.dueDate&&days>=0&&days<=7)||(Number(r.dueOdometer)>0&&a&&Number(r.dueOdometer)-Number(a.odometer)<=500&&Number(r.dueOdometer)>=Number(a.odometer)))}
 function refreshOptions(){
- const sel=$("reminderAsset"), dep=$("dependsOn"); if(!sel||!dep)return;
- const old=sel.value, oldDep=dep.value;
- sel.innerHTML=state.assets.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.category)}</option>`).join("")+'<option value="">بدون دارایی مشخص</option>';
- if(old&&state.assets.some(a=>a.id===old))sel.value=old;
- dep.innerHTML='<option value="">بدون وابستگی</option>'+state.reminders.map(r=>`<option value="${esc(r.id)}">${esc(r.title)}</option>`).join("");
- dep.value=oldDep;
+ const sel=$("reminderAsset"), dep=$("dependsOn"), serviceAsset=$("serviceAsset"), serviceReminder=$("serviceReminder");
+ const assetOptions=state.assets.filter(a=>a.status!=="archived").map(a=>`<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.category)}</option>`).join("")+'<option value="">بدون دارایی مشخص</option>';
+ if(sel){const old=sel.value;sel.innerHTML=assetOptions;if(old&&state.assets.some(a=>a.id===old))sel.value=old;}
+ if(dep){const old=dep.value;dep.innerHTML='<option value="">بدون وابستگی</option>'+state.reminders.filter(r=>r.status!=="cancelled").map(r=>`<option value="${esc(r.id)}">${esc(r.title)}</option>`).join("");dep.value=old;}
+ if(serviceAsset){const old=serviceAsset.value;serviceAsset.innerHTML=assetOptions;if(old&&state.assets.some(a=>a.id===old))serviceAsset.value=old;}
+ if(serviceReminder){const old=serviceReminder.value;serviceReminder.innerHTML='<option value="">سرویس مستقل / بدون عملیات</option>'+state.reminders.filter(r=>r.status!=="cancelled").map(r=>`<option value="${esc(r.id)}">${esc(r.title)}</option>`).join("");if(old&&state.reminders.some(r=>r.id===old))serviceReminder.value=old;}
 }
 function render(){
  const vehicle=selectedVehicle(), openRem=state.reminders.filter(r=>r.status==="open"), doneRem=state.reminders.filter(r=>r.status==="done");
@@ -59,7 +59,7 @@ function render(){
  $("assetIdentity").textContent=vehicle?[vehicle.plate?"پلاک "+vehicle.plate:"بدون پلاک",vehicle.vin?"شاسی "+vehicle.vin:""].filter(Boolean).join(" · ")||"مشخصات ثبت نشده":"خودرویی ثبت نشده";
  const urgent=openRem.filter(isLate); $("urgentCount").textContent=`${fa(urgent.length)} مورد`;
  $("urgentList").innerHTML=urgent.length?urgent.map(r=>`<article class="urgent-item"><span class="urgent-dot">!</span><div class="urgent-copy"><strong>${esc(r.title)}</strong><small>${esc((state.assets.find(a=>a.id===r.assetId)||{}).name||"بدون دارایی")} · ${esc(r.dueDate?fmtDate(r.dueDate):("کیلومتر "+fa(r.dueOdometer)))}</small></div><button class="small-btn" data-action="complete" data-id="${esc(r.id)}">ثبت سرویس</button></article>`).join(""):'<div class="urgent-empty"><span>✓</span><div><strong>فعلاً مورد عقب‌افتاده‌ای نداری</strong><small>فقط موارد واقعاً عقب‌افتاده در این قسمت نمایش داده می‌شوند.</small></div></div>';
- const relevant=state.reminders.filter(r=>!vehicle||!r.assetId||r.assetId===vehicle.id);
+ const relevant=state.reminders.filter(r=>r.status!=="cancelled");
  $("reminderList").innerHTML=relevant.length?relevant.map(r=>{
   const a=state.assets.find(x=>x.id===r.assetId),late=isLate(r),soon=dueSoon(r),done=r.status==="done";
   const duebits=[];if(r.dueDate)duebits.push(fmtDate(r.dueDate));if(r.dueOdometer)duebits.push(fa(r.dueOdometer)+" کیلومتر");
@@ -72,18 +72,28 @@ function render(){
  $("doneCount").textContent=`${fa(doneRem.length)} انجام‌شده`;
  const allHistory=state.services.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
  const total=allHistory.reduce((sum,s)=>sum+(Number(s.cost)||0),0);
- $("scheduleList").innerHTML=`<div class="history-summary"><span>تعداد سوابق: <b>${fa(allHistory.length)}</b></span><span>جمع هزینه‌ها: <b>${fa(total)} تومان</b></span></div>`+(state.reminders.length?state.reminders.slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999")).map(r=>`<div class="schedule-row"><span class="schedule-status ${r.status==="done"?"complete":isLate(r)?"late":"pending"}"></span><div><strong>${esc(r.title)}</strong><small>${esc(fmtDate(r.dueDate))} · ${r.status==="done"?"انجام‌شده":isLate(r)?"عقب‌افتاده":"باز"}</small></div><button class="small-btn" data-action="history" data-id="${esc(r.id)}">سوابق</button></div>`).join(""):"<p>هنوز عملیاتی ثبت نشده است.</p>");
+ const reminderRows=state.reminders.filter(r=>r.status!=="cancelled").slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999")).map(r=>`<div class="schedule-row"><span class="schedule-status ${r.status==="done"?"complete":isLate(r)?"late":"pending"}"></span><div><strong>${esc(r.title)}</strong><small>${esc((state.assets.find(a=>a.id===r.assetId)||{}).name||"بدون دارایی")} · ${esc(fmtDate(r.dueDate))} · ${r.status==="done"?"انجام‌شده":isLate(r)?"عقب‌افتاده":"باز"}</small></div><button class="small-btn" data-action="history" data-id="${esc(r.id)}">سوابق</button></div>`).join("");
+ const serviceRows=allHistory.map(s=>{const asset=state.assets.find(a=>a.id===s.assetId),rem=state.reminders.find(r=>r.id===s.reminderId);return `<article class="item service-history-row"><div class="item-mark">✓</div><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${esc(rem?.title||"سرویس مستقل")} · ${esc(asset?.name||"بدون دارایی")}${s.odometer?" · "+fa(s.odometer)+" کیلومتر":""}${s.part?" · "+esc(s.part):""}${s.notes?" · "+esc(s.notes):""}</p>${s.attachmentName?`<small>پیوست: ${esc(s.attachmentName)}</small>`:""}</div></article>`}).join("");
+ $("scheduleList").innerHTML=`<div class="history-summary"><span>تعداد سوابق: <b>${fa(allHistory.length)}</b></span><span>جمع هزینه‌ها: <b>${fa(total)} تومان</b></span></div><div class="schedule-subhead">عملیات و یادآوری‌ها</div>${reminderRows||"<p>هنوز عملیاتی تعریف نشده است.</p>"}<div class="schedule-subhead">سرویس‌های ثبت‌شده</div>${serviceRows||"<p>هنوز سرویس ثبت‌شده‌ای وجود ندارد. می‌توانی از «ثبت سرویس مستقل» استفاده کنی.</p>"}
  refreshOptions();
 }
 function resetAssetForm(){editingAssetId=null;const f=$("assetForm");f.reset();f.elements.category.value="خودرو";renderCategoryFields("خودرو",{});$("assetDialogTitle").textContent="افزودن دارایی"}
 function editAsset(id){const a=state.assets.find(x=>x.id===id);if(!a)return;editingAssetId=id;const f=$("assetForm");f.elements.name.value=a.name||"";f.elements.category.value=a.category||"خودرو";f.elements.notes.value=a.notes||"";renderCategoryFields(a.category||"خودرو",{...a,details:a.details||{}});$("assetDialogTitle").textContent="ویرایش دارایی";open("assetDialog")}
 function editReminder(id){const r=state.reminders.find(x=>x.id===id);if(!r)return;const f=$("reminderForm");for(const k of ["title","assetId","triggerType","dueOdometer","intervalDays","intervalKm","dependsOn","notes"])if(f.elements[k])f.elements[k].value=r[k]??"";f.elements.dueDate.value=toJalaliInput(r.dueDate||"");f.dataset.editId=id;open("reminderDialog")}
-function completeReminder(id){const r=state.reminders.find(x=>x.id===id);if(!r)return;const dep=state.reminders.find(x=>x.id===r.dependsOn);if(dep&&dep.status!=="done"){if(!confirm(`عملیات «${dep.title}» هنوز انجام نشده. با این حال ثبت سرویس ادامه پیدا کند؟`))return}
- const f=$("serviceForm");f.reset();f.elements.reminderId.value=id;f.elements.date.value=toJalaliInput(today());const a=state.assets.find(x=>x.id===r.assetId);f.elements.odometer.value=a?.odometer||"";open("serviceDialog")}
+function openServiceForm(reminderId=""){
+ const f=$("serviceForm");f.reset();refreshOptions();
+ f.elements.reminderId.value=reminderId;
+ const r=state.reminders.find(x=>x.id===reminderId), assetId=r?.assetId||selectedVehicle()?.id||"";
+ f.elements.assetId.value=assetId;
+ f.elements.date.value=toJalaliInput(today());
+ const a=state.assets.find(x=>x.id===assetId);f.elements.odometer.value=a?.odometer||"";
+ open("serviceDialog");
+}
+function completeReminder(id){const r=state.reminders.find(x=>x.id===id);if(!r)return;const dep=state.reminders.find(x=>x.id===r.dependsOn);if(dep&&dep.status!=="done"){if(!confirm(`عملیات «${dep.title}» هنوز انجام نشده. با این حال ثبت سرویس ادامه پیدا کند؟`))return}openServiceForm(id)}
 function showHistory(id){
- const rem=state.reminders.find(r=>r.id===id), items=state.services.filter(s=>s.reminderId===id);
+ const rem=state.reminders.find(r=>r.id===id), items=state.services.filter(s=>id?s.reminderId===id:true).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
  const total=items.reduce((sum,s)=>sum+(Number(s.cost)||0),0);
- $("historyContent").innerHTML=`<p>${esc(rem?.title||"تمام سوابق")} · جمع هزینه: <b>${fa(total)} تومان</b></p>`+(items.length?items.map(s=>`<article class="item"><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${s.odometer?fa(s.odometer)+" کیلومتر · ":""}${esc(s.part||"بدون قطعه ثبت‌شده")}${s.notes?" · "+esc(s.notes):""}${s.attachmentName?" · پیوست: "+esc(s.attachmentName):""}</p></div></article>`).join(""):"<p>برای این عملیات هنوز سابقه‌ای ثبت نشده است.</p>");
+ $("historyContent").innerHTML=`<p>${esc(rem?.title||(id?"عملیات":"تمام سوابق سرویس‌ها"))} · تعداد: <b>${fa(items.length)}</b> · جمع هزینه: <b>${fa(total)} تومان</b></p>`+(items.length?items.map(s=>{const asset=state.assets.find(a=>a.id===s.assetId),operation=state.reminders.find(r=>r.id===s.reminderId);return `<article class="item"><div class="item-main"><strong>${esc(fmtDate(s.date))} · ${fa(s.cost)} تومان</strong><p>${esc(operation?.title||"سرویس مستقل")} · ${esc(asset?.name||"بدون دارایی")}${s.odometer?" · "+fa(s.odometer)+" کیلومتر":""} · ${esc(s.part||"بدون قطعه ثبت‌شده")}${s.notes?" · "+esc(s.notes):""}</p>${s.attachmentName?`<p>پیوست: ${esc(s.attachmentName)}</p>`:""}</div></article>`}).join(""):"<p>هنوز سابقه‌ای ثبت نشده است.</p>");
  open("historyDialog");
 }
 $("addAssetBtn").addEventListener("click",()=>{resetAssetForm();open("assetDialog")});
@@ -92,6 +102,7 @@ $("addReminderBtn").addEventListener("click",()=>{ $("reminderForm").reset();del
 $("navAddBtn").addEventListener("click",()=>{ $("reminderForm").reset();delete $("reminderForm").dataset.editId;refreshOptions();open("reminderDialog")});
 $("editAssetBtn").addEventListener("click",()=>{const a=selectedVehicle();a?editAsset(a.id):(resetAssetForm(),open("assetDialog"))});
 $("historyBtn").addEventListener("click",()=>showHistory(null));
+$("addServiceBtn").addEventListener("click",()=>openServiceForm(""));
 $("exportBtn").addEventListener("click",exportBackup);
 $("importBtn").addEventListener("click",()=>$("importFile").click());
 $("importFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{const incoming=normalize(JSON.parse(await file.text()));if(!confirm("بازیابی، اطلاعات فعلی را با نسخهٔ انتخاب‌شده جایگزین می‌کند. ابتدا از اطلاعات فعلی پشتیبان بگیر. ادامه؟"))return;state=incoming;persist();toast("پشتیبان بازیابی شد.")}catch{toast("فایل پشتیبان معتبر نیست.")}e.target.value=""});
@@ -100,8 +111,8 @@ document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",
 $("assetForm").elements.category.addEventListener("change",e=>renderCategoryFields(e.target.value,{}));
 $("assetForm").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget;if(!validateJalaliFields(f))return;const d=new FormData(f),category=d.get("category"),details=readCategoryDetails(f,category);if(details===null)return;const a={id:editingAssetId||uid(),name:d.get("name").trim(),category,model:category==="خودرو"?(d.get("model")||""):"",year:category==="خودرو"?(d.get("year")||""):"",plate:category==="خودرو"?(d.get("plate")||""):"",odometer:category==="خودرو"?(Number(d.get("odometer"))||0):0,vin:category==="خودرو"?(d.get("vin")||""):"",details,notes:d.get("notes").trim(),createdAt:new Date().toISOString(),status:"active"};if(editingAssetId){const old=state.assets.findIndex(x=>x.id===editingAssetId);if(old>=0)state.assets[old]={...state.assets[old],...a}}else state.assets.push(a);if(a.category==="خودرو")state.selectedAssetId=a.id;resetAssetForm();close("assetDialog");persist();toast("دارایی ذخیره شد.")});
 $("reminderForm").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget;if(!validateJalaliFields(f))return;const d=new FormData(f),editId=f.dataset.editId,dueRaw=d.get("dueDate"),dueDate=dueRaw?toISODate(dueRaw):"";if(dueRaw&&!dueDate){toast("تاریخ سررسید را شمسی و به شکل ۱۴۰۵/۰۷/۲۸ وارد کن.");return}const obj={title:d.get("title").trim(),assetId:d.get("assetId"),triggerType:d.get("triggerType"),dueDate,dueOdometer:d.get("dueOdometer"),intervalDays:d.get("intervalDays"),intervalKm:d.get("intervalKm"),dependsOn:d.get("dependsOn"),notes:d.get("notes").trim()};if(obj.dependsOn===editId){toast("عملیات نمی‌تواند به خودش وابسته باشد.");return}if(editId){const r=state.reminders.find(x=>x.id===editId);if(r)Object.assign(r,obj)}else state.reminders.push({id:uid(),...obj,status:"open",createdAt:new Date().toISOString()});f.reset();delete f.dataset.editId;close("reminderDialog");persist();toast("عملیات ذخیره شد.")});
-$("serviceForm").addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget;if(!validateJalaliFields(f))return;const d=new FormData(f),serviceDate=toISODate(d.get("date")),id=d.get("reminderId"),r=state.reminders.find(x=>x.id===id),a=state.assets.find(x=>x.id===r?.assetId);let attachmentName="",attachmentData="";const file=f.elements.attachment.files[0];if(file){if(file.size>2*1024*1024){toast("حجم پیوست در نسخهٔ محلی حداکثر ۲ مگابایت است.");return}attachmentName=file.name;attachmentData=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(file)})}
- if(!serviceDate){toast("تاریخ انجام را شمسی و به شکل ۱۴۰۵/۰۷/۲۸ وارد کن.");return}const service={id:uid(),reminderId:id,assetId:r?.assetId||"",date:serviceDate,odometer:Number(d.get("odometer"))||0,part:d.get("part").trim(),cost:Number(d.get("cost"))||0,notes:d.get("notes").trim(),attachmentName,attachmentData,createdAt:new Date().toISOString()};
+$("serviceForm").addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget;if(!validateJalaliFields(f))return;const d=new FormData(f),serviceDate=toISODate(d.get("date")),id=d.get("reminderId")||"",r=state.reminders.find(x=>x.id===id),assetId=r?.assetId||d.get("assetId")||"",a=state.assets.find(x=>x.id===assetId);let attachmentName="",attachmentData="";const file=f.elements.attachment.files[0];if(file){if(file.size>2*1024*1024){toast("حجم پیوست در نسخهٔ محلی حداکثر ۲ مگابایت است.");return}attachmentName=file.name;attachmentData=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(file)})}
+ if(!serviceDate){toast("تاریخ انجام را شمسی و به شکل ۱۴۰۵/۰۷/۲۸ وارد کن.");return}const service={id:uid(),reminderId:id,assetId,date:serviceDate,odometer:Number(d.get("odometer"))||0,part:d.get("part").trim(),cost:Number(d.get("cost"))||0,notes:d.get("notes").trim(),attachmentName,attachmentData,createdAt:new Date().toISOString()};
  state.services.push(service);if(r){r.status="done";r.lastCompletedAt=service.date;if(r.intervalDays){const dt=new Date(service.date+"T12:00:00");dt.setDate(dt.getDate()+Number(r.intervalDays));r.dueDate=dt.toISOString().slice(0,10);r.status="open"}if(r.intervalKm&&service.odometer){r.dueOdometer=Number(service.odometer)+Number(r.intervalKm);r.status="open"}}
  if(a&&service.odometer)a.odometer=Math.max(Number(a.odometer)||0,service.odometer);
  close("serviceDialog");persist();toast("سرویس و هزینه در سوابق ثبت شد.")});
@@ -114,4 +125,52 @@ document.body.addEventListener("click",e=>{const b=e.target.closest("[data-actio
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;$("installBtn").classList.remove("hidden")});
 $("installBtn").addEventListener("click",async()=>{if(!installPrompt){toast("در آیفون: Safari ← Share ← Add to Home Screen.");return}installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$("installBtn").classList.add("hidden")});
 if("serviceWorker"in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+installJalaliCalendars();
+
+/* Interactive Persian calendar for every Jalali date field */
+let activeCalendarInput=null,calendarYear=0,calendarMonth=0;
+const persianMonthNames=["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+function installJalaliCalendars(){
+ document.querySelectorAll(".jalali-date").forEach(input=>{
+  if(input.parentElement?.classList.contains("date-input-wrap"))return;
+  const wrap=document.createElement("span");wrap.className="date-input-wrap";input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
+  const button=document.createElement("button");button.type="button";button.className="date-picker-trigger";button.dataset.calendarOpen="1";button.setAttribute("aria-label","باز کردن تقویم شمسی");button.textContent="▦";wrap.appendChild(button);
+ });
+ if(!$("jalaliCalendar")){
+  const panel=document.createElement("div");panel.id="jalaliCalendar";panel.className="jalali-calendar hidden";panel.setAttribute("role","dialog");panel.setAttribute("aria-label","تقویم شمسی");document.body.appendChild(panel);
+ }
+}
+function calendarDatesForMonth(year,month){
+ const base=new Date(Date.UTC(year+621,2,20)),found=[];
+ for(let offset=-100;offset<300;offset++){const d=new Date(base.getTime()+offset*86400000),p=jalaliParts(d);if(p.year===year&&p.month===month)found.push({day:p.day,iso:`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`,weekday:(d.getUTCDay()+1)%7});}
+ return found.sort((a,b)=>a.day-b.day);
+}
+function drawJalaliCalendar(){
+ const panel=$("jalaliCalendar");if(!panel||!activeCalendarInput)return;
+ const dates=calendarDatesForMonth(calendarYear,calendarMonth),selected=toISODate(activeCalendarInput.value),first=dates[0]?.weekday||0;
+ const cells=Array(first).fill('<span class="calendar-blank"></span>').concat(dates.map(d=>`<button type="button" class="calendar-day ${d.iso===selected?"selected":""}" data-calendar-date="${d.iso}">${fa(d.day)}</button>`));
+ panel.innerHTML=`<div class="calendar-head"><button type="button" data-calendar-month="-1" aria-label="ماه قبل">‹</button><strong>${persianMonthNames[calendarMonth-1]} ${fa(calendarYear)}</strong><button type="button" data-calendar-month="1" aria-label="ماه بعد">›</button></div><div class="calendar-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div><div class="calendar-days">${cells.join("")}</div><div class="calendar-foot"><button type="button" data-calendar-today="1">امروز</button><button type="button" data-calendar-close="1">بستن</button></div>`;
+ panel.classList.remove("hidden");
+ const rect=activeCalendarInput.getBoundingClientRect(),width=Math.min(320,window.innerWidth-24);
+ panel.style.width=width+"px";panel.style.top=Math.min(window.innerHeight-350,Math.max(8,rect.bottom+6))+"px";panel.style.left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left))+"px";
+}
+function openJalaliCalendar(input){
+ installJalaliCalendars();activeCalendarInput=input;
+ const iso=toISODate(input.value)||today(),parts=jalaliParts(new Date(iso+"T12:00:00Z"));
+ calendarYear=parts.year;calendarMonth=parts.month;drawJalaliCalendar();
+}
+document.addEventListener("click",e=>{
+ const trigger=e.target.closest("[data-calendar-open]");
+ if(trigger){e.preventDefault();const input=trigger.parentElement.querySelector(".jalali-date");if(input)openJalaliCalendar(input);return;}
+ const day=e.target.closest("[data-calendar-date]");
+ if(day&&activeCalendarInput){activeCalendarInput.value=toJalaliInput(day.dataset.calendarDate);activeCalendarInput.dispatchEvent(new Event("input",{bubbles:true}));activeCalendarInput.dispatchEvent(new Event("change",{bubbles:true}));$("jalaliCalendar").classList.add("hidden");activeCalendarInput=null;return;}
+ const month=e.target.closest("[data-calendar-month]");
+ if(month&&activeCalendarInput){calendarMonth+=Number(month.dataset.calendarMonth);if(calendarMonth<1){calendarMonth=12;calendarYear--}if(calendarMonth>12){calendarMonth=1;calendarYear++}drawJalaliCalendar();return;}
+ if(e.target.closest("[data-calendar-today]")&&activeCalendarInput){activeCalendarInput.value=toJalaliInput(today());activeCalendarInput.dispatchEvent(new Event("input",{bubbles:true}));activeCalendarInput.dispatchEvent(new Event("change",{bubbles:true}));$("jalaliCalendar").classList.add("hidden");activeCalendarInput=null;return;}
+ if(e.target.closest("[data-calendar-close]")){$("jalaliCalendar").classList.add("hidden");activeCalendarInput=null;return;}
+ if(!e.target.closest("#jalaliCalendar")){$("jalaliCalendar")?.classList.add("hidden");activeCalendarInput=null;}
+});
+window.addEventListener("resize",()=>{if(activeCalendarInput)drawJalaliCalendar()});
+window.addEventListener("scroll",()=>{if(activeCalendarInput)drawJalaliCalendar()},{passive:true});
+
 render();
