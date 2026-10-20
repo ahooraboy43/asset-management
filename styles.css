@@ -12,3 +12,25 @@
 .history-summary b{color:var(--text)}.vehicle-fields{padding:8px 10px;border:1px solid #ffffff0d;border-radius:13px;background:#ffffff04}
 dialog{max-height:88dvh;overflow:auto}dialog form{padding-bottom:2px}input[type=file]{font-size:11px;padding:9px}
 @media(max-width:380px){.history-summary{font-size:9px}}
+
+
+/* Functional service and Jalali calendar controls */
+.section-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.schedule-subhead{font-size:11px;font-weight:700;color:#d7d9dc;padding:12px 2px 5px;border-top:1px solid var(--line);margin-top:8px}
+.service-history-row{margin:7px 0}
+.date-input-wrap{display:flex;align-items:stretch;gap:6px;margin-top:7px}
+.date-input-wrap input.jalali-date{margin-top:0;min-width:0;flex:1}
+.date-picker-trigger{flex:none;width:44px;border:1px solid #ffffff17;border-radius:11px;background:#ffffff0b;color:var(--cyan);font-size:20px;cursor:pointer}
+.jalali-calendar{position:fixed;z-index:1000;padding:12px;border:1px solid #ffffff20;border-radius:16px;background:#292a2d;box-shadow:0 16px 50px #0009;color:var(--text);direction:rtl}
+.jalali-calendar.hidden{display:none}
+.calendar-head,.calendar-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.calendar-head strong{font-size:13px}
+.calendar-head button,.calendar-foot button{border:1px solid #ffffff12;border-radius:8px;padding:6px 10px;background:#ffffff0b;color:var(--text);font:inherit;cursor:pointer}
+.calendar-weekdays,.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.calendar-weekdays{margin:12px 0 5px;color:var(--muted);font-size:10px}
+.calendar-days{grid-auto-rows:35px}
+.calendar-day{border:1px solid transparent;border-radius:9px;background:#ffffff07;color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+.calendar-day:hover,.calendar-day.selected{background:var(--cyan);color:#102027;font-weight:800}
+.calendar-blank{display:block}
+.calendar-foot{margin-top:10px}
+@media(max-width:420px){.section-actions{gap:2px}.section-actions .text-action{font-size:10px;padding:5px}.jalali-calendar{max-width:calc(100vw - 24px)}}
