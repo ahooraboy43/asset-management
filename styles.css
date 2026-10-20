@@ -34,3 +34,15 @@ dialog{max-height:88dvh;overflow:auto}dialog form{padding-bottom:2px}input[type=
 .calendar-blank{display:block}
 .calendar-foot{margin-top:10px}
 @media(max-width:420px){.section-actions{gap:2px}.section-actions .text-action{font-size:10px;padding:5px}.jalali-calendar{max-width:calc(100vw - 24px)}}
+
+
+/* Clear grouping for the complete asset inventory and direct report access */
+.asset-category-list{display:grid;gap:18px}
+.asset-category-group{display:grid;gap:10px;min-width:0}
+.asset-category-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
+.asset-category-title strong{font-size:15px;color:var(--text)}
+.asset-category-title span{font-size:12px;color:var(--muted);white-space:nowrap}
+.asset-category-group>.item{margin:0}
+.schedule-actions{display:flex;justify-content:flex-start;margin:0 0 12px}
+.schedule-actions .small-btn{min-height:38px}
+.service-history-row{margin-top:8px}
