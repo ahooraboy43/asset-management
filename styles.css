@@ -127,3 +127,15 @@ body{background:radial-gradient(ellipse at 50% 0,#253448 0,#18212d 44%,#131922 1
 
 /* Hotfix: make separate page visibility authoritative even if other display rules exist. */
 [data-page][hidden], .page-hidden { display: none !important; }
+
+/* SQL-backed account screen */
+.auth-screen{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:#101114;overflow:auto}
+.auth-screen.hidden{display:none!important}
+.auth-card{width:min(100%,420px);display:grid;gap:14px;padding:26px;border:1px solid #ffffff1b;border-radius:24px;background:#1a1b20;box-shadow:0 24px 80px #0008;color:var(--text)}
+.auth-card h1{font-size:23px;margin:0}
+.auth-brand{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:rgba(112,214,196,.12);color:var(--cyan);font-size:27px}
+.auth-card label{display:grid;gap:7px;font-size:12px}
+.auth-card input{width:100%;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#101115;color:var(--text);font:inherit}
+.auth-card .button{width:100%}
+.auth-error{margin:0;padding:10px 12px;border:1px solid #d66;border-radius:10px;color:#ffb7b7;background:#d331311c;font-size:12px}
+body:not(.app-ready)>.topbar,body:not(.app-ready)>.container,body:not(.app-ready)>.bottom-nav{visibility:hidden}
