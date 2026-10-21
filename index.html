@@ -14,6 +14,22 @@
 </head>
 
 <body>
+    <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
+      <form id="authForm" class="auth-card">
+        <div class="auth-brand">◈</div>
+        <p class="eyebrow">مدیریت دارایی و نگهداری</p>
+        <h1 id="authTitle">ورود به همراه من</h1>
+        <p class="muted">اطلاعات هر حساب در دیتابیس و فضای کاری جداگانه ذخیره می‌شود.</p>
+        <input id="authMode" type="hidden" value="login">
+        <label>ایمیل<input id="authEmail" type="email" required maxlength="190" autocomplete="username" placeholder="name@example.com"></label>
+        <div id="authDisplayNameField" class="hidden"><label>نام نمایشی<input id="authDisplayName" maxlength="120" autocomplete="name"></label></div>
+        <label>رمز عبور<input id="authPassword" type="password" required minlength="12" maxlength="4096" autocomplete="current-password" placeholder="حداقل ۱۲ نویسه"></label>
+        <p id="authError" class="auth-error hidden" role="alert"></p>
+        <button id="authSubmit" class="button button-primary" type="submit">ورود</button>
+        <button id="authModeToggle" class="button button-plain" type="button">حساب نداری؟ ثبت‌نام</button>
+        <small class="muted">از رمز عبور قوی و یکتا استفاده کن. اطلاعات محلی تا پایان بررسی انتقال حذف نمی‌شوند.</small>
+      </form>
+    </section>
     <header class="topbar" id="top">
         <div class="brand"><span class="brand-mark">◈</span>
             <div>
@@ -211,9 +227,7 @@
                         فعلی</small></button><button class="shortcut-card"
                     id="moreRestoreBtn"><span>↥</span><strong>بازیابی پشتیبان</strong><small>بازیابی از فایل
                         JSON</small></button></div>
-            <div class="notice"><strong>ذخیره‌سازی اطلاعات</strong>
-                <p>اطلاعات در حافظه همین مرورگر نگهداری می‌شود. برای انتقال دستگاه، مرتب پشتیبان بگیر.</p>
-            </div><input id="importFile" type="file" accept="application/json" hidden>
+            <div class="notice"><strong>ذخیره‌سازی اطلاعات</strong><p>اطلاعات در دیتابیس حساب شما ذخیره می‌شود.</p><p id="signedInEmail" class="muted"></p><button id="authLogoutBtn" class="button button-plain" type="button">خروج از حساب</button></div><input id="importFile" type="file" accept="application/json" hidden>
         </section>
         <section class="app-page reports-page" data-page="reports">
             <div class="page-intro">
@@ -341,7 +355,7 @@
                     سرویس انجام‌شده</strong><small>ثبت هزینه و سابقه</small></button></div>
     </dialog>
     <div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
-    <script src="./app.js?v=20261020-13"></script>
+    <script src="./app.js?v=20261021-sql1"></script>
 </body>
 
 </html>
