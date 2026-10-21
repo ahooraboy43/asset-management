@@ -127,3 +127,9 @@ body{background:radial-gradient(ellipse at 50% 0,#253448 0,#18212d 44%,#131922 1
 
 /* Hotfix: make separate page visibility authoritative even if other display rules exist. */
 [data-page][hidden], .page-hidden { display: none !important; }
+
+/* PNG asset images */
+.hero-asset-image{display:block;width:min(100%,560px);height:200px;object-fit:contain;margin:-3px auto 0;filter:drop-shadow(0 14px 14px #0005)}
+.hero-asset-image.hidden{display:none!important}.vehicle-art.has-custom-image>svg,.vehicle-art.has-custom-image>.generic-asset-art{display:none!important}
+.asset-image-picker{margin-top:8px;padding:10px;border:1px solid #ffffff12;border-radius:14px;background:#ffffff04}.asset-image-picker>label{margin-top:0}
+.asset-image-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.asset-image-choice{min-width:0;padding:8px 4px;border:1px solid #ffffff14;border-radius:11px;background:#ffffff06;color:var(--text);font:inherit;font-size:10px;cursor:pointer}.asset-image-choice.active{border-color:var(--cyan);background:#36c8d51a}.asset-image-choice img{display:block;width:100%;height:48px;object-fit:contain;margin-bottom:5px}.asset-image-choice span{display:block;overflow-wrap:anywhere}.asset-image-preview{display:flex;align-items:center;gap:10px;margin-top:8px}.asset-image-preview img{width:62px;height:62px;object-fit:contain;background:#ffffff08;border-radius:10px}.asset-image-preview.hidden{display:none!important}

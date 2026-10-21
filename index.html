@@ -66,6 +66,7 @@
                     </g>
                 </svg>
                 <div id="genericAssetArt" class="generic-asset-art hidden">◇</div>
+                <img id="heroAssetImage" class="hero-asset-image hidden" alt="تصویر دارایی">
             </div>
             <div class="asset-carousel-controls"><button type="button" data-carousel-step="-1"
                     aria-label="دارایی قبلی">‹</button>
@@ -250,6 +251,14 @@
                     <option value="شخصی">شخصی</option>
                     <option value="سلامت">سلامت</option>
                 </select></label>
+            <section class="asset-image-picker">
+                <label for="assetImageFile">تصویر اختصاصی دارایی (PNG)</label>
+                <input id="assetImageFile" type="file" accept="image/png">
+                <input type="hidden" name="image" value="">
+                <div id="assetImagePreview" class="asset-image-preview hidden"><img id="assetImagePreviewImg" alt="پیش‌نمایش تصویر دارایی"><button id="clearAssetImage" class="small-btn" type="button">حذف انتخاب تصویر</button></div>
+                <small class="muted">تصاویر ثابت را داخل پوشه assets/images قرار بده.</small>
+                <div id="assetImageChoices" class="asset-image-choices"></div>
+            </section>
             <div id="categoryFields" class="vehicle-fields"></div><label>معیار اصلی پیگیری<select name="metricUnit"
                     id="assetMetricUnit">
                     <option value="کیلومتر">کیلومتر</option>
