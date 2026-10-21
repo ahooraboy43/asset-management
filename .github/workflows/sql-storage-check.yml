@@ -1,0 +1,27 @@
+name: SQL storage checks
+
+on:
+  push:
+    branches:
+      - feature/mysql-storage
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  syntax-and-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check app.js
+      - name: Check PHP syntax
+        run: |
+          for file in api/*.php; do php -l "$file"; done
+          php -l api/config.example.php
+      - name: Check SQL storage schema
+        run: |
+          grep -q "CREATE TABLE IF NOT EXISTS workspace_app_state" database/schema.sql
+          grep -q "FOREIGN KEY(workspace_id) REFERENCES workspaces(id)" database/schema.sql
+          grep -q "api/state.php" app.js
+          grep -q "api/auth.php" app.js
