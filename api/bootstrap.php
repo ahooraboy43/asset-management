@@ -31,7 +31,7 @@ function api_origin(): void {
     $expected = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? '');
     if (!hash_equals($expected, $origin)) api_json(['error' => 'مبدأ درخواست مجاز نیست.'], 403);
 }
-$configPath = dirname(__DIR__) . '/asset-management-config.php';
+$configPath = dirname(dirname(__DIR__)) . '/asset-management-config.php';
 if (!is_file($configPath)) $configPath = __DIR__ . '/config.php';
 if (!is_file($configPath)) api_json(['error' => 'تنظیمات سرور آماده نیست. فایل تنظیمات خصوصی را طبق راهنمای نصب ایجاد کنید.'], 503);
 $config = require $configPath;
