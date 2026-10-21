@@ -120,3 +120,11 @@ CREATE TABLE IF NOT EXISTS audit_events (
  CONSTRAINT fk_audit_workspace FOREIGN KEY(workspace_id) REFERENCES workspaces(id),
  CONSTRAINT fk_audit_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Compatibility state store used while migrating the existing browser UI to SQL.
+CREATE TABLE IF NOT EXISTS workspace_app_state (
+ workspace_id BIGINT UNSIGNED PRIMARY KEY,
+ state_json LONGTEXT NOT NULL,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ CONSTRAINT fk_workspace_app_state_workspace FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
