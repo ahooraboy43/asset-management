@@ -41,8 +41,90 @@ services.forEach(s=>{if(!s.assetId&&s.reminderId){const r=reminders.find(x=>x.id
  }));
  return {version:3,assets,reminders,services};
 }
-let state=loadState();
-function persist(){try{localStorage.setItem(STORE_KEY_V2,JSON.stringify(state));render()}catch(e){showToast("فضای ذخیره‌سازی دستگاه کافی نیست؛ از اطلاعات پشتیبان بگیر.")}}
+let state={version:3,assets:[],reminders:[],services:[]};
+let apiReady=false, apiCsrfToken="", apiSaveQueue=Promise.resolve(), apiEmail="";
+function persist(){
+ try{localStorage.setItem(STORE_KEY_V2,JSON.stringify(state));}catch(e){}
+ render();
+ if(!apiReady)return;
+ const snapshot=JSON.stringify(state);
+ apiSaveQueue=apiSaveQueue.then(async()=>{
+   const response=await fetch("./api/state.php",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json","X-CSRF-Token":apiCsrfToken},body:JSON.stringify({state:JSON.parse(snapshot)})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||"ذخیره در دیتابیس انجام نشد.");
+ }).catch(error=>{toast((error?.message||"خطای ذخیره‌سازی") + " نسخه محلی نیز نگه داشته شده است.");});
+ return apiSaveQueue;
+}
+
+async function apiCall(url,options={}){
+ const response=await fetch(url,{credentials:"same-origin",cache:"no-store",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+ const data=await response.json().catch(()=>({error:"پاسخ سرور قابل خواندن نیست."}));
+ if(!response.ok)throw new Error(data.error||"درخواست به سرور ناموفق بود.");
+ return data;
+}
+function showAuthError(message){const box=$("authError");if(box){box.textContent=message;box.classList.remove("hidden")}}
+function clearAuthError(){const box=$("authError");if(box){box.textContent="";box.classList.add("hidden")}}
+function localStateHasData(v){return !!(v&&(v.assets?.length||v.reminders?.length||v.services?.length))}
+async function loadRemoteState(){
+ const remote=await apiCall("./api/state.php");
+ if(remote.state&&Array.isArray(remote.state.assets)){state=normalize(remote.state);}
+ else {
+   const local=loadState();
+   if(localStateHasData(local)){
+     const shouldImport=confirm("در این مرورگر اطلاعات قبلی پیدا شد. آن‌ها به فضای کاری این حساب در دیتابیس منتقل شوند؟ نسخه محلی حذف نخواهد شد.");
+     if(shouldImport){
+       state=normalize(local);
+       const saved=await apiCall("./api/state.php",{method:"PUT",headers:{"X-CSRF-Token":apiCsrfToken},body:JSON.stringify({state})});
+       if(!saved.ok)throw new Error("انتقال اطلاعات قبلی کامل نشد.");
+       toast("اطلاعات قبلی به دیتابیس منتقل شد.");
+     } else state={version:3,assets:[],reminders:[],services:[]};
+   } else state={version:3,assets:[],reminders:[],services:[]};
+ }
+ apiReady=true;
+ localStorage.setItem(STORE_KEY_V2,JSON.stringify(state));
+ $("authScreen")?.classList.add("hidden");
+ document.body.classList.add("app-ready");
+ refreshOptions();render();
+}
+async function acceptAuthResult(data){
+ apiCsrfToken=data.csrfToken||"";apiEmail=data.email||"";
+ await loadRemoteState();
+ const label=$("signedInEmail");if(label)label.textContent=apiEmail;
+}
+async function bootStorage(){
+ const form=$("authForm");
+ $("authModeToggle")?.addEventListener("click",()=>{
+   const register=$("authMode").value!=="register";
+   $("authMode").value=register?"register":"login";
+   $("authSubmit").textContent=register?"ساخت حساب":"ورود";
+   $("authModeToggle").textContent=register?"قبلاً حساب داری؟ ورود":"حساب نداری؟ ثبت‌نام";
+   $("authDisplayNameField")?.classList.toggle("hidden",!register);
+   $("authPassword")?.setAttribute("autocomplete",register?"new-password":"current-password");
+   clearAuthError();
+ });
+ $("authLogoutBtn")?.addEventListener("click",async()=>{
+   try{await apiCall("./api/auth.php",{method:"POST",headers:{"X-CSRF-Token":apiCsrfToken},body:JSON.stringify({action:"logout"})});}catch(e){}
+   apiReady=false;apiCsrfToken="";state={version:3,assets:[],reminders:[],services:[]};
+   document.body.classList.remove("app-ready");$("authScreen")?.classList.remove("hidden");
+   if(form)form.reset();clearAuthError();
+ });
+ form?.addEventListener("submit",async e=>{
+   e.preventDefault();clearAuthError();
+   const button=$("authSubmit");button.disabled=true;button.textContent="در حال اتصال…";
+   try{
+     const action=$("authMode").value;
+     const data=await apiCall("./api/auth.php",{method:"POST",body:JSON.stringify({action,email:$("authEmail").value.trim(),password:$("authPassword").value,displayName:$("authDisplayName")?.value.trim()||""})});
+     await acceptAuthResult(data);
+   }catch(error){showAuthError(error.message||"اتصال برقرار نشد.");}
+   finally{button.disabled=false;button.textContent=$("authMode").value==="register"?"ساخت حساب":"ورود";}
+ });
+ try{
+   const session=await apiCall("./api/auth.php");
+   if(session.authenticated)await acceptAuthResult(session);
+   else $("authScreen")?.classList.remove("hidden");
+ }catch(error){$("authScreen")?.classList.remove("hidden");showAuthError(error.message+" اگر API هنوز روی هاست نصب نشده، طبق MYSQL_DEPLOYMENT.md پیکربندی را انجام بده.");}
+}
+
 function fa(n){return new Intl.NumberFormat("fa-IR").format(Number(n)||0)}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.remove("hidden");clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.add("hidden"),2800)}
@@ -459,6 +541,7 @@ function isLate(r){const a=state.assets.find(x=>x.id===r.assetId),m=dashboardMet
 function dueSoon(r){const a=state.assets.find(x=>x.id===r.assetId),m=dashboardMetric(a),days=r.dueDate?Math.ceil((new Date(r.dueDate+"T12:00:00")-new Date(today()+"T12:00:00"))/86400000):9999;return r.status==="open"&&((r.dueDate&&days>=0&&days<=7)||((r.triggerType==="odometer"||r.triggerType==="both")&&Number(r.dueOdometer)>0&&Number(r.dueOdometer)-m.value<=500&&Number(r.dueOdometer)>=m.value))}
 
 render();
+bootStorage();
 
 let carouselTouchStartX=0;document.querySelector(".asset-hero")?.addEventListener("touchstart",e=>{carouselTouchStartX=e.changedTouches?.[0]?.clientX||0},{passive:true});document.querySelector(".asset-hero")?.addEventListener("touchend",e=>{const end=e.changedTouches?.[0]?.clientX||0,delta=end-carouselTouchStartX;if(Math.abs(delta)>45)moveDashboardAsset(delta<0?1:-1)},{passive:true});
 
