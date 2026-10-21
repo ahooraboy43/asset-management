@@ -1,0 +1,4 @@
+/api/config.php
+/asset-management-config.php
+*.log
+.DS_Store
