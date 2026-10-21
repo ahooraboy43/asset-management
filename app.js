@@ -44,7 +44,7 @@ services.forEach(s=>{if(!s.assetId&&s.reminderId){const r=reminders.find(x=>x.id
 let state={version:3,assets:[],reminders:[],services:[]};
 let apiReady=false, apiCsrfToken="", apiSaveQueue=Promise.resolve(), apiEmail="";
 function persist(){
- try{localStorage.setItem(STORE_KEY_V2,JSON.stringify(state));}catch(e){}
+ try{localStorage.setItem(apiEmail?(STORE_KEY_V2+"-account-"+encodeURIComponent(apiEmail)):STORE_KEY_V2,JSON.stringify(state));}catch(e){}
  render();
  if(!apiReady)return;
  const snapshot=JSON.stringify(state);
@@ -69,19 +69,25 @@ async function loadRemoteState(){
  const remote=await apiCall("./api/state.php");
  if(remote.state&&Array.isArray(remote.state.assets)){state=normalize(remote.state);}
  else {
-   const local=loadState();
+   const migrationMarker="hamrah-man-migrated-account-"+encodeURIComponent(apiEmail);
+   const hasLegacy=!!(localStorage.getItem(STORE_KEY_V2)||localStorage.getItem(STORE_KEY));
+   const local=hasLegacy&&!localStorage.getItem(migrationMarker)?loadState():{version:3,assets:[],reminders:[],services:[]};
    if(localStateHasData(local)){
-     const shouldImport=confirm("در این مرورگر اطلاعات قبلی پیدا شد. آن‌ها به فضای کاری این حساب در دیتابیس منتقل شوند؟ نسخه محلی حذف نخواهد شد.");
+     const shouldImport=confirm("این دیتابیس حساب جدید خالی است و در مرورگر اطلاعات محلی پیدا شد. این اطلاعات ممکن است متعلق به حساب دیگری باشد. فقط اگر مطمئنی متعلق به همین حساب است، انتقال را تأیید کن. نسخه محلی حذف نمی‌شود.");
      if(shouldImport){
        state=normalize(local);
        const saved=await apiCall("./api/state.php",{method:"PUT",headers:{"X-CSRF-Token":apiCsrfToken},body:JSON.stringify({state})});
        if(!saved.ok)throw new Error("انتقال اطلاعات قبلی کامل نشد.");
        toast("اطلاعات قبلی به دیتابیس منتقل شد.");
      } else state={version:3,assets:[],reminders:[],services:[]};
-   } else state={version:3,assets:[],reminders:[],services:[]};
+     localStorage.setItem(migrationMarker,"1");
+   } else {
+     state={version:3,assets:[],reminders:[],services:[]};
+     localStorage.setItem(migrationMarker,"1");
+   }
  }
  apiReady=true;
- localStorage.setItem(STORE_KEY_V2,JSON.stringify(state));
+ try{localStorage.setItem(STORE_KEY_V2+"-account-"+encodeURIComponent(apiEmail),JSON.stringify(state));}catch(e){};
  $("authScreen")?.classList.add("hidden");
  document.body.classList.add("app-ready");
  refreshOptions();render();
